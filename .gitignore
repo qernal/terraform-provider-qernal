@@ -1,2 +1,5 @@
 .env
 .idea/
+
+terraform.tfstate
+terraform.tfstate.backup
