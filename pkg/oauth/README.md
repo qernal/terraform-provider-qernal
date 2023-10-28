@@ -1,0 +1,2 @@
+## Oauth
+### We use "golang.org/x/oauth2/clientcredentials" package to get access token from OAuth server using client credentials grant type. In this case, the oauth client is terraform provider and the Ory Hydra as a OAuth server 
