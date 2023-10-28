@@ -1,37 +1,34 @@
 package main
 
 import (
-	"fmt"
-	"github.com/spf13/viper"
-	"qernal-terraform-provider/pkg/oauth"
-	"strings"
+	"context"
+	"flag"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"log"
+	"qernal-terraform-provider/internal/provider"
 )
 
+var version string = "dev"
+
 func main() {
+	var debug bool
 
-	viper.SetConfigFile(".env")
-	viper.ReadInConfig()
+	flag.BoolVar(&debug, "debug", false, "set to true to run the provider with support for debuggers like delve")
+	flag.Parse()
 
-	// TODO: will be replaced with the production token url of OAuth Server (Ory Hydra)
-	tokenURL := "https://hydra.qernal-bld.dev/oauth2/token"
-
-	qernalTokenEnv := viper.Get("QERNAL_TOKEN")
-	if qernalTokenEnv == nil {
-		panic("The qernal token is required")
+	opts := providerserver.ServeOpts{
+		// NOTE: This is not a typical Terraform Registry provider address,
+		// such as registry.terraform.io/hashicorp/hashicups. This specific
+		// provider address is used in these tutorials in conjunction with a
+		// specific Terraform CLI configuration for manual development testing
+		// of this provider.
+		Address: "registry.terraform.io/hashicorp/qernal",
+		Debug:   debug,
 	}
 
-	qernalToken := qernalTokenEnv.(string)
-	if !strings.Contains(qernalToken, "@") {
-		panic("The qernal token is invalid")
-	}
+	err := providerserver.Serve(context.Background(), provider.New(version), opts)
 
-	clientID := strings.Split(qernalToken, "@")[0]
-	clientSecret := strings.Split(qernalToken, "@")[1]
-
-	oauthClient := oauth.NewOauthClient(tokenURL, clientID, clientSecret)
-	token, err := oauthClient.GetAccessTokenWithClientCredentials()
 	if err != nil {
-		panic(err.Error())
+		log.Fatal(err.Error())
 	}
-	fmt.Println(token)
 }
