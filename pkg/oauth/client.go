@@ -2,11 +2,14 @@ package oauth
 
 import (
 	"context"
+	"errors"
 	"golang.org/x/oauth2/clientcredentials"
+	"strings"
 )
 
 type OAuthClient interface {
 	GetAccessTokenWithClientCredentials() (string, error)
+	ExtractClientIDAndClientSecretFromToken(string) error
 }
 
 type oauthClient struct {
@@ -30,10 +33,20 @@ func (oc *oauthClient) GetAccessTokenWithClientCredentials() (token string, err 
 
 }
 
-func NewOauthClient(serverURL, clientID, clientSecret string) OAuthClient {
+func NewOauthClient(tokenURL string) OAuthClient {
 	return &oauthClient{
-		tokenURL:     serverURL,
-		clientID:     clientID,
-		clientSecret: clientSecret,
+		tokenURL: tokenURL,
 	}
+}
+
+func (oc *oauthClient) ExtractClientIDAndClientSecretFromToken(token string) (err error) {
+	if !strings.Contains(token, "@") || strings.Count(token, "@") > 1 {
+		err = errors.New("the qernal token is invalid")
+		return
+	}
+
+	oc.clientID = strings.Split(token, "@")[0]
+	oc.clientSecret = strings.Split(token, "@")[1]
+
+	return nil
 }

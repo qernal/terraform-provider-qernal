@@ -1,15 +1,42 @@
 package client
 
-type qernalAPIClient struct {
-	host  string
-	token string
+import (
+	"context"
+	"fmt"
+	openapiclient "github.com/qernal/openapi-chaos-go-client"
+	"qernal-terraform-provider/pkg/oauth"
+)
+
+type QernalAPIClient struct {
+	openapiclient.APIClient
 }
 
-type QernalAPIClient interface {
-	CreateOrganisation(req CreateOrganisationReq) (CreateOrganisationRes, error)
-	ReadOrganisation(id string) (CreateOrganisationRes, error)
-}
+func New(ctx context.Context, hostHydra, hostChaos, token string) (client QernalAPIClient, err error) {
 
-func New(host string, token string) (QernalAPIClient, error) {
-	return qernalAPIClient{}, nil
+	oauthClient := oauth.NewOauthClient(hostHydra)
+	err = oauthClient.ExtractClientIDAndClientSecretFromToken(token)
+	if err != nil {
+		return
+	}
+
+	accessToken, err := oauthClient.GetAccessTokenWithClientCredentials()
+	if err != nil {
+		return
+	}
+
+	configuration := &openapiclient.Configuration{
+		Servers: openapiclient.ServerConfigurations{
+			{
+				URL: hostChaos,
+			},
+		},
+		DefaultHeader: map[string]string{
+			"Authorization": fmt.Sprintf("Bearer %s", accessToken),
+		},
+	}
+	apiClient := openapiclient.NewAPIClient(configuration)
+
+	return QernalAPIClient{
+		APIClient: *apiClient,
+	}, nil
 }
