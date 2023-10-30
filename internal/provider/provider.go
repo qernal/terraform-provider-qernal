@@ -16,8 +16,9 @@ import (
 
 // qernalProviderModel maps provider schema data to a Go type.
 type qernalProviderModel struct {
-	Host  types.String `tfsdk:"host"`
-	Token types.String `tfsdk:"token"`
+	Token     types.String `tfsdk:"token"`
+	HostChaos types.String `tfsdk:"host_chaos"`
+	HostHydra types.String `tfsdk:"host_hydra"`
 }
 
 var (
@@ -44,7 +45,10 @@ func (p *qernalProvider) Metadata(_ context.Context, _ provider.MetadataRequest,
 func (p *qernalProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"host": schema.StringAttribute{
+			"host_chaos": schema.StringAttribute{
+				Optional: true,
+			},
+			"host_hydra": schema.StringAttribute{
 				Optional: true,
 			},
 			"token": schema.StringAttribute{
@@ -63,15 +67,6 @@ func (p *qernalProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		return
 	}
 
-	if config.Host.IsUnknown() {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("host"),
-			"Unknown host",
-			"The provider cannot create the Qernal API client as there is an unknown configuration value for the host. "+
-				"Either target apply the source of the value first, set the value statically in the configuration, or use the QERNAL_HOST environment variable.",
-		)
-	}
-
 	if config.Token.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("token"),
@@ -87,14 +82,23 @@ func (p *qernalProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	// Default values to environment variables, but override
 	// with Terraform configuration value if set.
 
-	host := os.Getenv("QERNAL_HOST")
-	if host == "" {
-		host = "https://chaos.qernal.com/v1"
+	hostChaos := os.Getenv("QERNAL_HOST_CHAOS")
+	if hostChaos == "" {
+		hostChaos = "https://chaos.qernal.com/v1"
+	}
+
+	hostHydra := os.Getenv("QERNAL_HOST_HYDRA")
+	if hostHydra == "" {
+		hostHydra = "https://hydra.qernal.com/oauth2/token"
 	}
 	token := os.Getenv("QERNAL_TOKEN")
 
-	if !config.Host.IsNull() {
-		host = config.Host.ValueString()
+	if !config.HostChaos.IsNull() {
+		hostChaos = config.HostChaos.ValueString()
+	}
+
+	if !config.HostHydra.IsNull() {
+		hostHydra = config.HostHydra.ValueString()
 	}
 
 	if !config.Token.IsNull() {
@@ -104,15 +108,6 @@ func (p *qernalProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	// If any of the expected configurations are missing, return
 	// errors with provider-specific guidance.
 
-	if host == "" {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("host"),
-			"Missing Qernal API Host",
-			"The provider cannot create the Qernal API client as there is a missing or empty value for the Qernal API host. "+
-				"Set the host value in the configuration or use the QERNAL_HOST environment variable. "+
-				"If either is already set, ensure the value is not empty.",
-		)
-	}
 	if token == "" {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("token"),
@@ -128,7 +123,7 @@ func (p *qernalProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	}
 
 	// Create a new Qernal client using the configuration values
-	client, err := qernalclient.New(host, token)
+	client, err := qernalclient.New(ctx, hostHydra, hostChaos, token)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Create Qernal API Client",
@@ -143,7 +138,6 @@ func (p *qernalProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	// type Configure methods.
 	resp.DataSourceData = client
 	resp.ResourceData = client
-
 }
 
 func (p *qernalProvider) DataSources(_ context.Context) []func() datasource.DataSource {

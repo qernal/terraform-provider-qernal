@@ -6,8 +6,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	openapiclient "github.com/qernal/openapi-chaos-go-client"
 	qernalclient "qernal-terraform-provider/internal/client"
-	"strings"
 )
 
 import (
@@ -92,35 +92,31 @@ func (r *organisationResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	createOrganisationReq := qernalclient.CreateOrganisationReq{
-		Name: plan.Name.String(),
-	}
-
 	// Create new organisation
-	res, err := r.client.CreateOrganisation(createOrganisationReq)
+	org, _, err := r.client.OrganisationsApi.OrganisationsCreate(ctx).OrganisationBody(openapiclient.OrganisationBody{
+		Name: plan.Name.String(),
+	}).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating organisation",
-			"Could not create organisation, unexpected error: "+err.Error(),
-		)
+			"Could not create organisation, unexpected error: "+err.Error())
 		return
 	}
 
-	plan.ID = types.StringValue(res.ID)
-	plan.Name = types.StringValue(res.Name)
-	plan.UserID = types.StringValue(res.UserID)
+	plan.ID = types.StringValue(org.Id)
+	plan.Name = types.StringValue(org.Name)
+	plan.UserID = types.StringValue(org.UserId)
 	date, _ := types.ObjectValue(
 		map[string]attr.Type{
 			"created_at": types.StringType,
 			"updated_at": types.StringType,
 		},
 		map[string]attr.Value{
-			"created_at": types.StringValue(res.Date.CreatedAt),
-			"updated_at": types.StringValue(res.Date.UpdatedAt),
+			"created_at": types.StringValue(org.Date.CreatedAt),
+			"updated_at": types.StringValue(org.Date.UpdatedAt),
 		},
 	)
 	plan.Date = date
-	//plan.Date = organisationDate{CreatedAt: types.StringValue(res.Date.CreatedAt), UpdatedAt: types.StringValue(res.Date.UpdatedAt)}
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, plan)
@@ -142,7 +138,7 @@ func (r *organisationResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	// Get refreshed organisation value from qernal
-	res, err := r.client.ReadOrganisation(state.ID.ValueString())
+	org, _, err := r.client.OrganisationsApi.OrganisationsGet(ctx, state.ID.ValueString()).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading organisation",
@@ -150,7 +146,18 @@ func (r *organisationResource) Read(ctx context.Context, req resource.ReadReques
 		)
 		return
 	}
-	state.Name = types.StringValue(strings.ReplaceAll(res.Name, `\"`, ""))
+	state.Name = types.StringValue(org.Name)
+	state.UserID = types.StringValue(org.UserId)
+	state.Date, _ = types.ObjectValue(
+		map[string]attr.Type{
+			"created_at": types.StringType,
+			"updated_at": types.StringType,
+		},
+		map[string]attr.Value{
+			"created_at": types.StringValue(org.Date.CreatedAt),
+			"updated_at": types.StringValue(org.Date.UpdatedAt),
+		},
+	)
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
@@ -163,10 +170,78 @@ func (r *organisationResource) Read(ctx context.Context, req resource.ReadReques
 
 // Update updates the resource and sets the updated Terraform state on success.
 func (r *organisationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+
+	// Retrieve values from plan
+	var plan organisationResourceModel
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Update existing organisation
+	_, _, err := r.client.OrganisationsApi.OrganisationsUpdate(ctx, plan.ID.ValueString()).OrganisationBody(
+		openapiclient.OrganisationBody{
+			Name: plan.Name.String(),
+		}).Execute()
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Updating organisation",
+			"Could not update organisation, unexpected error: "+err.Error(),
+		)
+		return
+	}
+
+	// Fetch updated organisation
+	org, _, err := r.client.OrganisationsApi.OrganisationsGet(ctx, plan.ID.ValueString()).Execute()
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Reading organisation",
+			"Could not read organisation ID "+plan.ID.ValueString()+": "+err.Error(),
+		)
+		return
+	}
+
+	// Update resource state with updated items and timestamp
+	plan.Name = types.StringValue(org.Name)
+	plan.UserID = types.StringValue(org.UserId)
+	plan.Date, _ = types.ObjectValue(
+		map[string]attr.Type{
+			"created_at": types.StringType,
+			"updated_at": types.StringType,
+		},
+		map[string]attr.Value{
+			"created_at": types.StringValue(org.Date.CreatedAt),
+			"updated_at": types.StringValue(org.Date.UpdatedAt),
+		},
+	)
+
+	diags = resp.State.Set(ctx, plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 // Delete deletes the resource and removes the Terraform state on success.
 func (r *organisationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	// Retrieve values from state
+	var state organisationResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Delete existing order
+	_, _, err := r.client.OrganisationsApi.OrganisationsDelete(ctx, state.ID.ValueString()).Execute()
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Deleting organisation",
+			"Could not delete organisation, unexpected error: "+err.Error(),
+		)
+		return
+	}
 }
 
 // organisationResourceModel maps the resource schema data.
