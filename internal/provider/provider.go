@@ -147,5 +147,6 @@ func (p *qernalProvider) DataSources(_ context.Context) []func() datasource.Data
 func (p *qernalProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		qernalresource.NewOrganisationResource,
+		qernalresource.NewProjectResource,
 	}
 }
