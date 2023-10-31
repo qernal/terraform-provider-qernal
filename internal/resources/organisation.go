@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
@@ -59,6 +61,9 @@ func (r *organisationResource) Schema(_ context.Context, _ resource.SchemaReques
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"user_id": schema.StringAttribute{
 				Computed: true,
@@ -94,7 +99,7 @@ func (r *organisationResource) Create(ctx context.Context, req resource.CreateRe
 
 	// Create new organisation
 	org, _, err := r.client.OrganisationsApi.OrganisationsCreate(ctx).OrganisationBody(openapiclient.OrganisationBody{
-		Name: plan.Name.String(),
+		Name: plan.Name.ValueString(),
 	}).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -182,7 +187,7 @@ func (r *organisationResource) Update(ctx context.Context, req resource.UpdateRe
 	// Update existing organisation
 	_, _, err := r.client.OrganisationsApi.OrganisationsUpdate(ctx, plan.ID.ValueString()).OrganisationBody(
 		openapiclient.OrganisationBody{
-			Name: plan.Name.String(),
+			Name: plan.Name.ValueString(),
 		}).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError(
