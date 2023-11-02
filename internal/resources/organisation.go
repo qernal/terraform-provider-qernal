@@ -98,7 +98,7 @@ func (r *organisationResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	// Create new organisation
-	org, _, err := r.client.OrganisationsApi.OrganisationsCreate(ctx).OrganisationBody(openapiclient.OrganisationBody{
+	org, _, err := r.client.OrganisationsAPI.OrganisationsCreate(ctx).OrganisationBody(openapiclient.OrganisationBody{
 		Name: plan.Name.ValueString(),
 	}).Execute()
 	if err != nil {
@@ -143,7 +143,7 @@ func (r *organisationResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	// Get refreshed organisation value from qernal
-	org, _, err := r.client.OrganisationsApi.OrganisationsGet(ctx, state.ID.ValueString()).Execute()
+	org, _, err := r.client.OrganisationsAPI.OrganisationsGet(ctx, state.ID.ValueString()).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading organisation",
@@ -151,6 +151,7 @@ func (r *organisationResource) Read(ctx context.Context, req resource.ReadReques
 		)
 		return
 	}
+
 	state.Name = types.StringValue(org.Name)
 	state.UserID = types.StringValue(org.UserId)
 	state.Date, _ = types.ObjectValue(
@@ -185,7 +186,7 @@ func (r *organisationResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	// Update existing organisation
-	_, _, err := r.client.OrganisationsApi.OrganisationsUpdate(ctx, plan.ID.ValueString()).OrganisationBody(
+	_, _, err := r.client.OrganisationsAPI.OrganisationsUpdate(ctx, plan.ID.ValueString()).OrganisationBody(
 		openapiclient.OrganisationBody{
 			Name: plan.Name.ValueString(),
 		}).Execute()
@@ -198,7 +199,7 @@ func (r *organisationResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	// Fetch updated organisation
-	org, _, err := r.client.OrganisationsApi.OrganisationsGet(ctx, plan.ID.ValueString()).Execute()
+	org, _, err := r.client.OrganisationsAPI.OrganisationsGet(ctx, plan.ID.ValueString()).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading organisation",
@@ -239,7 +240,7 @@ func (r *organisationResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 
 	// Delete existing order
-	_, _, err := r.client.OrganisationsApi.OrganisationsDelete(ctx, state.ID.ValueString()).Execute()
+	_, _, err := r.client.OrganisationsAPI.OrganisationsDelete(ctx, state.ID.ValueString()).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting organisation",

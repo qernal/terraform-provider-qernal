@@ -197,6 +197,8 @@ github.com/qernal/openapi-chaos-go-client v0.0.0-20231029202406-65a3f9207d5e h1:
 github.com/qernal/openapi-chaos-go-client v0.0.0-20231029202406-65a3f9207d5e/go.mod h1:V03TW7A8DLMBBZz1RGvIWog7Hfla2uPbNBIcMhg8bX8=
 github.com/qernal/openapi-chaos-go-client v0.0.0-20231030155057-d6e468ea662f h1:CfRE8qWvJKg9AGJjFS9AHCQn/QCP1TPPLzuBYEDTmPg=
 github.com/qernal/openapi-chaos-go-client v0.0.0-20231030155057-d6e468ea662f/go.mod h1:V03TW7A8DLMBBZz1RGvIWog7Hfla2uPbNBIcMhg8bX8=
+github.com/qernal/openapi-chaos-go-client v0.0.0-20231031164253-29c6476e8173 h1:IepWKaMX16Zspf+9loJ6+2j4s8BmcjqFNlQdZ27Yt3A=
+github.com/qernal/openapi-chaos-go-client v0.0.0-20231031164253-29c6476e8173/go.mod h1:V03TW7A8DLMBBZz1RGvIWog7Hfla2uPbNBIcMhg8bX8=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rogpeppe/go-internal v1.9.0 h1:73kH8U+JUqXU8lRuOHeVHaa/SZPifC7BkcraZVejAe8=
 github.com/rogpeppe/go-internal v1.9.0/go.mod h1:WtVeX8xhTBvf0smdhujwtBcq4Qrzq/fJaraNFVN+nFs=
