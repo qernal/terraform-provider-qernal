@@ -98,7 +98,7 @@ func (r *projectResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	// Create new Project
-	org, _, err := r.client.ProjectsApi.ProjectsCreate(ctx).ProjectBody(openapiclient.ProjectBody{
+	org, _, err := r.client.ProjectsAPI.ProjectsCreate(ctx).ProjectBody(openapiclient.ProjectBody{
 		Name:  plan.Name.ValueString(),
 		OrgId: plan.OrgID.ValueString(),
 	}).Execute()
@@ -144,7 +144,7 @@ func (r *projectResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 
 	// Get refreshed Project value from qernal
-	org, _, err := r.client.ProjectsApi.ProjectsGet(ctx, state.ID.ValueString()).Execute()
+	org, _, err := r.client.ProjectsAPI.ProjectsGet(ctx, state.ID.ValueString()).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Project",
@@ -187,7 +187,7 @@ func (r *projectResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	// Update existing Project
-	_, _, err := r.client.ProjectsApi.ProjectsUpdate(ctx, plan.ID.ValueString()).ProjectBodyPatch(
+	_, _, err := r.client.ProjectsAPI.ProjectsUpdate(ctx, plan.ID.ValueString()).ProjectBodyPatch(
 		openapiclient.ProjectBodyPatch{
 			Name:  plan.Name.ValueStringPointer(),
 			OrgId: plan.OrgID.ValueStringPointer(),
@@ -201,7 +201,7 @@ func (r *projectResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	// Fetch updated Project
-	org, _, err := r.client.ProjectsApi.ProjectsGet(ctx, plan.ID.ValueString()).Execute()
+	org, _, err := r.client.ProjectsAPI.ProjectsGet(ctx, plan.ID.ValueString()).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Project",
@@ -242,7 +242,7 @@ func (r *projectResource) Delete(ctx context.Context, req resource.DeleteRequest
 	}
 
 	// Delete existing order
-	_, _, err := r.client.ProjectsApi.ProjectsDelete(ctx, state.ID.ValueString()).Execute()
+	_, _, err := r.client.ProjectsAPI.ProjectsDelete(ctx, state.ID.ValueString()).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting Project",
