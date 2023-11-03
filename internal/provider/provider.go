@@ -148,5 +148,7 @@ func (p *qernalProvider) Resources(_ context.Context) []func() resource.Resource
 	return []func() resource.Resource{
 		qernalresource.NewOrganisationResource,
 		qernalresource.NewProjectResource,
+		qernalresource.NewSecretResource,
+		qernalresource.NewTokenResource,
 	}
 }
