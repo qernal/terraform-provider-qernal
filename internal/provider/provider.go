@@ -46,13 +46,16 @@ func (p *qernalProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"host_chaos": schema.StringAttribute{
-				Optional: true,
+				Optional:    true,
+				Description: "The endpoint of Qernal Cloud API",
 			},
 			"host_hydra": schema.StringAttribute{
-				Optional: true,
+				Optional:    true,
+				Description: "The endpoint of OAuth 2 server",
 			},
 			"token": schema.StringAttribute{
-				Required: true,
+				Required:    true,
+				Description: "The token use to authenticate with the qernal platform, with format: client_id@clien_secret",
 			},
 		},
 	}
@@ -84,12 +87,12 @@ func (p *qernalProvider) Configure(ctx context.Context, req provider.ConfigureRe
 
 	hostChaos := os.Getenv("QERNAL_HOST_CHAOS")
 	if hostChaos == "" {
-		hostChaos = "https://chaos.qernal.com/v1"
+		hostChaos = "https://chaos.qernal.com"
 	}
 
 	hostHydra := os.Getenv("QERNAL_HOST_HYDRA")
 	if hostHydra == "" {
-		hostHydra = "https://hydra.qernal.com/oauth2/token"
+		hostHydra = "https://hydra.qernal.com"
 	}
 	token := os.Getenv("QERNAL_TOKEN")
 

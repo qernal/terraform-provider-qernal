@@ -27,7 +27,7 @@ func New(ctx context.Context, hostHydra, hostChaos, token string) (client Qernal
 	configuration := &openapiclient.Configuration{
 		Servers: openapiclient.ServerConfigurations{
 			{
-				URL: hostChaos,
+				URL: hostChaos + "/v1",
 			},
 		},
 		DefaultHeader: map[string]string{

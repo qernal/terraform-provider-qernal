@@ -70,7 +70,7 @@ func (r *secretResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Required: true,
 			},
 			"encryption": schema.StringAttribute{
-				Optional: false,
+				Optional: true,
 			},
 			"revision": schema.StringAttribute{
 				Computed: true,
