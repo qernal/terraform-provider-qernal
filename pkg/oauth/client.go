@@ -13,7 +13,7 @@ type OAuthClient interface {
 }
 
 type oauthClient struct {
-	tokenURL     string
+	serverURL    string
 	clientID     string
 	clientSecret string
 }
@@ -22,7 +22,7 @@ func (oc *oauthClient) GetAccessTokenWithClientCredentials() (token string, err 
 	config := clientcredentials.Config{
 		ClientID:     oc.clientID,
 		ClientSecret: oc.clientSecret,
-		TokenURL:     oc.tokenURL,
+		TokenURL:     oc.serverURL + "/oauth2/token",
 	}
 
 	oauthToken, err := config.Token(context.TODO())
@@ -33,9 +33,9 @@ func (oc *oauthClient) GetAccessTokenWithClientCredentials() (token string, err 
 
 }
 
-func NewOauthClient(tokenURL string) OAuthClient {
+func NewOauthClient(serverURL string) OAuthClient {
 	return &oauthClient{
-		tokenURL: tokenURL,
+		serverURL: serverURL,
 	}
 }
 
