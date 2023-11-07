@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
@@ -59,20 +61,43 @@ func (r *secretResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 		Attributes: map[string]schema.Attribute{
 			"project_id": schema.StringAttribute{
 				Required: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"name": schema.StringAttribute{
 				Required: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"type": schema.StringAttribute{
 				Required: true,
 			},
 			"payload": schema.SingleNestedAttribute{
 				Required: true,
+				Attributes: map[string]schema.Attribute{
+					"environment_value": schema.StringAttribute{
+						Optional: true,
+					},
+					"registry": schema.StringAttribute{
+						Optional: true,
+					},
+					"registry_value": schema.StringAttribute{
+						Optional: true,
+					},
+					"certificate": schema.StringAttribute{
+						Optional: true,
+					},
+					"certificate_value": schema.StringAttribute{
+						Optional: true,
+					},
+				},
 			},
 			"encryption": schema.StringAttribute{
-				Optional: true,
+				Required: true,
 			},
-			"revision": schema.StringAttribute{
+			"revision": schema.Int64Attribute{
 				Computed: true,
 			},
 			"date": schema.SingleNestedAttribute{
@@ -106,60 +131,33 @@ func (r *secretResource) Create(ctx context.Context, req resource.CreateRequest,
 	payload := openapiclient.SecretCreatePayload{}
 	switch secretType {
 	case openapiclient.SECRETCREATETYPE_REGISTRY:
-		registry := plan.Payload.Attributes()["registry"].String()
-		registryValue := plan.Payload.Attributes()["registry_value"].String()
+		registry := *plan.Payload.Registry
+		registryValue := *plan.Payload.RegistryValue
 		payload.SecretRegistry = openapiclient.NewSecretRegistry(registry, registryValue)
 	case openapiclient.SECRETCREATETYPE_CERTIFICATE:
-		certificate := plan.Payload.Attributes()["certificate"].String()
-		certificateValue := plan.Payload.Attributes()["certificate_value"].String()
+		certificate := *plan.Payload.Certificate
+		certificateValue := *plan.Payload.CertificateValue
 		payload.SecretCertificate = openapiclient.NewSecretCertificate(certificate, certificateValue)
 	case openapiclient.SECRETCREATETYPE_ENVIRONMENT:
-		environmentValue := plan.Payload.Attributes()["environment_value"].String()
+		environmentValue := *plan.Payload.EnvironmentValue
 		payload.SecretEnvironment = openapiclient.NewSecretEnvironment(environmentValue)
 	}
-	secret, _, err := r.client.SecretsAPI.ProjectsSecretsCreate(ctx, plan.ProjectID.ValueString()).SecretBody(openapiclient.SecretBody{
+	secret, httpRes, err := r.client.SecretsAPI.ProjectsSecretsCreate(ctx, plan.ProjectID.ValueString()).SecretBody(openapiclient.SecretBody{
 		Name:       plan.Name.ValueString(),
 		Type:       secretType,
 		Payload:    payload,
 		Encryption: plan.Encryption.ValueString(),
 	}).Execute()
 	if err != nil {
+		resData, _ := qernalclient.ParseResponseData(httpRes)
 		resp.Diagnostics.AddError(
-			"Error creating Project",
-			"Could not create Project, unexpected error: "+err.Error())
+			"Error creating Secret",
+			"Could not create Secret, unexpected error: "+err.Error()+" with"+fmt.Sprintf(", detail: %v", resData))
 		return
 	}
 
 	plan.Name = types.StringValue(secret.Name)
 	plan.Type = types.StringValue(string(secret.Type))
-
-	planPayload := basetypes.ObjectValue{}
-	switch secretType {
-	case openapiclient.SECRETCREATETYPE_REGISTRY:
-		planPayload, _ = types.ObjectValue(
-			map[string]attr.Type{
-				"registry":       types.StringType,
-				"registry_value": types.StringType,
-			},
-			map[string]attr.Value{
-				"registry":       types.StringValue(plan.Payload.Attributes()["registry"].String()),
-				"registry_value": types.StringValue(plan.Payload.Attributes()["registry_value"].String()),
-			},
-		)
-	case openapiclient.SECRETCREATETYPE_CERTIFICATE:
-		planPayload, _ = types.ObjectValue(
-			map[string]attr.Type{
-				"certificate":       types.StringType,
-				"certificate_value": types.StringType,
-			},
-			map[string]attr.Value{
-				"certificate":       types.StringValue(plan.Payload.Attributes()["certificate"].String()),
-				"certificate_value": types.StringValue(plan.Payload.Attributes()["certificate_value"].String()),
-			},
-		)
-
-	}
-	plan.Payload = planPayload
 
 	plan.Revision = types.Int64Value(int64(secret.Revision))
 
@@ -208,26 +206,12 @@ func (r *secretResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 	state.Type = types.StringValue(string(secret.Type))
 
-	planPayload := basetypes.ObjectValue{}
+	planPayload := payloadObj{}
 	switch secret.Type {
-	case openapiclient.SecretMetaType((openapiclient.SECRETCREATETYPE_REGISTRY)):
-		planPayload, _ = types.ObjectValue(
-			map[string]attr.Type{
-				"registry": types.StringType,
-			},
-			map[string]attr.Value{
-				"registry": types.StringValue(secret.Payload.SecretMetaResponseRegistryPayload.Registry),
-			},
-		)
+	case openapiclient.SecretMetaType(openapiclient.SECRETCREATETYPE_REGISTRY):
+		planPayload.Registry = &secret.Payload.SecretMetaResponseRegistryPayload.Registry
 	case openapiclient.SecretMetaType(openapiclient.SECRETCREATETYPE_CERTIFICATE):
-		planPayload, _ = types.ObjectValue(
-			map[string]attr.Type{
-				"certificate": types.StringType,
-			},
-			map[string]attr.Value{
-				"certificate": types.StringValue(secret.Payload.SecretMetaResponseCertificatePayload.Certificate),
-			},
-		)
+		planPayload.Certificate = &secret.Payload.SecretMetaResponseCertificatePayload.Certificate
 
 	}
 	state.Payload = planPayload
@@ -270,26 +254,27 @@ func (r *secretResource) Update(ctx context.Context, req resource.UpdateRequest,
 	payload := openapiclient.SecretCreatePayload{}
 	switch secretType {
 	case openapiclient.SECRETCREATETYPE_REGISTRY:
-		registry := plan.Payload.Attributes()["registry"].String()
-		registryValue := plan.Payload.Attributes()["registry_value"].String()
+		registry := *plan.Payload.Registry
+		registryValue := *plan.Payload.RegistryValue
 		payload.SecretRegistry = openapiclient.NewSecretRegistry(registry, registryValue)
 	case openapiclient.SECRETCREATETYPE_CERTIFICATE:
-		certificate := plan.Payload.Attributes()["certificate"].String()
-		certificateValue := plan.Payload.Attributes()["certificate_value"].String()
+		certificate := *plan.Payload.Certificate
+		certificateValue := *plan.Payload.CertificateValue
 		payload.SecretCertificate = openapiclient.NewSecretCertificate(certificate, certificateValue)
 	case openapiclient.SECRETCREATETYPE_ENVIRONMENT:
-		environmentValue := plan.Payload.Attributes()["environment_value"].String()
+		environmentValue := *plan.Payload.EnvironmentValue
 		payload.SecretEnvironment = openapiclient.NewSecretEnvironment(environmentValue)
 	}
-	_, _, err := r.client.SecretsAPI.ProjectsSecretsUpdate(ctx, plan.ProjectID.ValueString(), plan.Name.ValueString()).SecretBodyPatch(openapiclient.SecretBodyPatch{
+	_, httpRes, err := r.client.SecretsAPI.ProjectsSecretsUpdate(ctx, plan.ProjectID.ValueString(), plan.Name.ValueString()).SecretBodyPatch(openapiclient.SecretBodyPatch{
 		Type:    secretType,
 		Payload: payload,
 	}).Execute()
 	if err != nil {
+		resData, _ := qernalclient.ParseResponseData(httpRes)
 		resp.Diagnostics.AddError(
-			"Error Updating secret",
-			"Could not update secret, unexpected error: "+err.Error(),
-		)
+			"Error updating Secret",
+			"Could not update Secret, unexpected error: "+err.Error()+" with"+fmt.Sprintf(", detail: %v", resData))
+		return
 		return
 	}
 
@@ -308,28 +293,15 @@ func (r *secretResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	plan.Type = types.StringValue(string(secret.Type))
 
-	planPayload := basetypes.ObjectValue{}
+	planPayload := payloadObj{}
 	switch secret.Type {
-	case openapiclient.SecretMetaType((openapiclient.SECRETCREATETYPE_REGISTRY)):
-		planPayload, _ = types.ObjectValue(
-			map[string]attr.Type{
-				"registry": types.StringType,
-			},
-			map[string]attr.Value{
-				"registry": types.StringValue(secret.Payload.SecretMetaResponseRegistryPayload.Registry),
-			},
-		)
+	case openapiclient.SecretMetaType(openapiclient.SECRETCREATETYPE_REGISTRY):
+		planPayload.Registry = &secret.Payload.SecretMetaResponseRegistryPayload.Registry
 	case openapiclient.SecretMetaType(openapiclient.SECRETCREATETYPE_CERTIFICATE):
-		planPayload, _ = types.ObjectValue(
-			map[string]attr.Type{
-				"certificate": types.StringType,
-			},
-			map[string]attr.Value{
-				"certificate": types.StringValue(secret.Payload.SecretMetaResponseCertificatePayload.Certificate),
-			},
-		)
+		planPayload.Certificate = &secret.Payload.SecretMetaResponseCertificatePayload.Certificate
 
 	}
+
 	plan.Payload = planPayload
 
 	plan.Revision = types.Int64Value(int64(secret.Revision))
@@ -378,8 +350,18 @@ type secretResourceModel struct {
 	ProjectID  types.String          `tfsdk:"project_id"`
 	Name       types.String          `tfsdk:"name"`
 	Type       types.String          `tfsdk:"type"`
-	Payload    basetypes.ObjectValue `tfsdk:"payload"`
+	Payload    payloadObj            `tfsdk:"payload"`
 	Encryption types.String          `tfsdk:"encryption"`
 	Revision   types.Int64           `tfsdk:"revision"`
 	Date       basetypes.ObjectValue `tfsdk:"date"`
+}
+
+type payloadObj struct {
+	EnvironmentValue *string `tfsdk:"environment_value"`
+
+	Certificate      *string `tfsdk:"certificate"`
+	CertificateValue *string `tfsdk:"certificate_value"`
+
+	Registry      *string `tfsdk:"registry"`
+	RegistryValue *string `tfsdk:"registry_value"`
 }
