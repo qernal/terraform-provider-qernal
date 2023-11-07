@@ -2,8 +2,11 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
+	"io"
+	"net/http"
 	"qernal-terraform-provider/pkg/oauth"
 )
 
@@ -39,4 +42,21 @@ func New(ctx context.Context, hostHydra, hostChaos, token string) (client Qernal
 	return QernalAPIClient{
 		APIClient: *apiClient,
 	}, nil
+}
+
+func ParseResponseData(res *http.Response) (resData interface{}, err error) {
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return
+	}
+	data := map[string]interface{}{}
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return
+	}
+	return data, nil
+}
+
+type ResponseData struct {
+	Data string `json:"data"`
 }
