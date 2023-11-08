@@ -62,13 +62,17 @@ func (r *secretResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			"project_id": schema.StringAttribute{
 				Required: true,
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplaceIf(func(ctx context.Context, request planmodifier.StringRequest, response *stringplanmodifier.RequiresReplaceIfFuncResponse) {
+						response.RequiresReplace = false
+					}, "", ""),
 				},
 			},
 			"name": schema.StringAttribute{
 				Required: true,
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplaceIf(func(ctx context.Context, request planmodifier.StringRequest, response *stringplanmodifier.RequiresReplaceIfFuncResponse) {
+						response.RequiresReplace = false
+					}, "", ""),
 				},
 			},
 			"type": schema.StringAttribute{
@@ -140,12 +144,35 @@ func (r *secretResource) Create(ctx context.Context, req resource.CreateRequest,
 		payload.SecretEnvironment = openapiclient.NewSecretEnvironment(environmentValue)
 	}
 
-	// TODO: get latest encryption key
+	// get dek encryption key
+	keyRes, _, err := r.client.SecretsAPI.ProjectsSecretsList(ctx, plan.ProjectID.ValueString()).Execute()
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error creating Secret",
+			"Could not create Secret, unexpected error: "+err.Error())
+		return
+	}
+	keys := keyRes.Data
+	dekKeys := []openapiclient.SecretMetaResponse{}
+	for _, d := range keys {
+		if d.Type == openapiclient.SECRETMETATYPE_DEK {
+			dekKeys = append(dekKeys, d)
+		}
+	}
+	if len(dekKeys) < 1 {
+		resp.Diagnostics.AddError(
+			"Error creating Secret",
+			"Could not create Secret, unexpected error: "+err.Error())
+		return
+	}
+
+	encryption := fmt.Sprintf(`keys/dek/%d`, dekKeys[0].Revision)
 
 	secret, httpRes, err := r.client.SecretsAPI.ProjectsSecretsCreate(ctx, plan.ProjectID.ValueString()).SecretBody(openapiclient.SecretBody{
-		Name:    plan.Name.ValueString(),
-		Type:    secretType,
-		Payload: payload,
+		Name:       plan.Name.ValueString(),
+		Type:       secretType,
+		Payload:    payload,
+		Encryption: encryption,
 	}).Execute()
 	if err != nil {
 		resData, _ := qernalclient.ParseResponseData(httpRes)
@@ -265,11 +292,34 @@ func (r *secretResource) Update(ctx context.Context, req resource.UpdateRequest,
 		payload.SecretEnvironment = openapiclient.NewSecretEnvironment(environmentValue)
 	}
 
-	// TODO: get latest encryption key
+	// get latest encryption key
+	keyRes, _, err := r.client.SecretsAPI.ProjectsSecretsList(ctx, plan.ProjectID.ValueString()).Execute()
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error creating Secret",
+			"Could not create Secret, unexpected error: "+err.Error())
+		return
+	}
+	keys := keyRes.Data
+	dekKeys := []openapiclient.SecretMetaResponse{}
+	for _, d := range keys {
+		if d.Type == openapiclient.SECRETMETATYPE_DEK {
+			dekKeys = append(dekKeys, d)
+		}
+	}
+	if len(dekKeys) < 1 {
+		resp.Diagnostics.AddError(
+			"Error creating Secret",
+			"Could not create Secret, unexpected error: "+err.Error())
+		return
+	}
+
+	encryption := fmt.Sprintf(`keys/dek/%d`, dekKeys[0].Revision)
 
 	_, httpRes, err := r.client.SecretsAPI.ProjectsSecretsUpdate(ctx, plan.ProjectID.ValueString(), plan.Name.ValueString()).SecretBodyPatch(openapiclient.SecretBodyPatch{
-		Type:    secretType,
-		Payload: payload,
+		Type:       secretType,
+		Payload:    payload,
+		Encryption: encryption,
 	}).Execute()
 	if err != nil {
 		resData, _ := qernalclient.ParseResponseData(httpRes)
