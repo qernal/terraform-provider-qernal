@@ -21,7 +21,6 @@ resource "qernal_secret" "environment_secret" {
   payload = {
     environment_value = "MY_FIRST_SECRET"
   }
-  encryption = "keys/dek/0"
 }
 
 resource "qernal_secret" "registry_secret" {
@@ -32,7 +31,6 @@ resource "qernal_secret" "registry_secret" {
     registry       = ""
     registry_value = ""
   }
-  encryption = "keys/dek/0"
 }
 
 resource "qernal_secret" "certificate_secret" {
@@ -43,7 +41,6 @@ resource "qernal_secret" "certificate_secret" {
     certificate       = ""
     certificate_value = ""
   }
-  encryption = "keys/dek/0"
 }
 ```
 
@@ -52,7 +49,6 @@ resource "qernal_secret" "certificate_secret" {
 
 ### Required
 
-- `encryption` (String)
 - `name` (String)
 - `payload` (Attributes) (see [below for nested schema](#nestedatt--payload))
 - `project_id` (String)
