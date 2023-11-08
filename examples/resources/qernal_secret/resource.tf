@@ -6,7 +6,6 @@ resource "qernal_secret" "environment_secret" {
   payload = {
     environment_value = "MY_FIRST_SECRET"
   }
-  encryption = "keys/dek/0"
 }
 
 resource "qernal_secret" "registry_secret" {
@@ -17,7 +16,6 @@ resource "qernal_secret" "registry_secret" {
     registry       = ""
     registry_value = ""
   }
-  encryption = "keys/dek/0"
 }
 
 resource "qernal_secret" "certificate_secret" {
@@ -28,5 +26,4 @@ resource "qernal_secret" "certificate_secret" {
     certificate       = ""
     certificate_value = ""
   }
-  encryption = "keys/dek/0"
 }
