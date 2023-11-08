@@ -94,9 +94,6 @@ func (r *secretResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 					},
 				},
 			},
-			"encryption": schema.StringAttribute{
-				Required: true,
-			},
 			"revision": schema.Int64Attribute{
 				Computed: true,
 			},
@@ -142,11 +139,13 @@ func (r *secretResource) Create(ctx context.Context, req resource.CreateRequest,
 		environmentValue := *plan.Payload.EnvironmentValue
 		payload.SecretEnvironment = openapiclient.NewSecretEnvironment(environmentValue)
 	}
+
+	// TODO: get latest encryption key
+
 	secret, httpRes, err := r.client.SecretsAPI.ProjectsSecretsCreate(ctx, plan.ProjectID.ValueString()).SecretBody(openapiclient.SecretBody{
-		Name:       plan.Name.ValueString(),
-		Type:       secretType,
-		Payload:    payload,
-		Encryption: plan.Encryption.ValueString(),
+		Name:    plan.Name.ValueString(),
+		Type:    secretType,
+		Payload: payload,
 	}).Execute()
 	if err != nil {
 		resData, _ := qernalclient.ParseResponseData(httpRes)
@@ -265,6 +264,9 @@ func (r *secretResource) Update(ctx context.Context, req resource.UpdateRequest,
 		environmentValue := *plan.Payload.EnvironmentValue
 		payload.SecretEnvironment = openapiclient.NewSecretEnvironment(environmentValue)
 	}
+
+	// TODO: get latest encryption key
+
 	_, httpRes, err := r.client.SecretsAPI.ProjectsSecretsUpdate(ctx, plan.ProjectID.ValueString(), plan.Name.ValueString()).SecretBodyPatch(openapiclient.SecretBodyPatch{
 		Type:    secretType,
 		Payload: payload,
@@ -347,13 +349,12 @@ func (r *secretResource) Delete(ctx context.Context, req resource.DeleteRequest,
 
 // secretResourceModel maps the resource schema data.
 type secretResourceModel struct {
-	ProjectID  types.String          `tfsdk:"project_id"`
-	Name       types.String          `tfsdk:"name"`
-	Type       types.String          `tfsdk:"type"`
-	Payload    payloadObj            `tfsdk:"payload"`
-	Encryption types.String          `tfsdk:"encryption"`
-	Revision   types.Int64           `tfsdk:"revision"`
-	Date       basetypes.ObjectValue `tfsdk:"date"`
+	ProjectID types.String          `tfsdk:"project_id"`
+	Name      types.String          `tfsdk:"name"`
+	Type      types.String          `tfsdk:"type"`
+	Payload   payloadObj            `tfsdk:"payload"`
+	Revision  types.Int64           `tfsdk:"revision"`
+	Date      basetypes.ObjectValue `tfsdk:"date"`
 }
 
 type payloadObj struct {
