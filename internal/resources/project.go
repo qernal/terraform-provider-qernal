@@ -2,12 +2,10 @@ package resources
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
 	qernalclient "qernal-terraform-provider/internal/client"
 )
@@ -73,6 +71,7 @@ func (r *projectResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"date": schema.SingleNestedAttribute{
 				Computed: true,
+				Required: false,
 				Attributes: map[string]schema.Attribute{
 					"created_at": schema.StringAttribute{
 						Computed: true,
@@ -98,7 +97,7 @@ func (r *projectResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	// Create new Project
-	org, _, err := r.client.ProjectsAPI.ProjectsCreate(ctx).ProjectBody(openapiclient.ProjectBody{
+	prj, _, err := r.client.ProjectsAPI.ProjectsCreate(ctx).ProjectBody(openapiclient.ProjectBody{
 		Name:  plan.Name.ValueString(),
 		OrgId: plan.OrgID.ValueString(),
 	}).Execute()
@@ -109,20 +108,13 @@ func (r *projectResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	plan.ID = types.StringValue(org.Id)
-	plan.Name = types.StringValue(org.Name)
-	plan.OrgID = types.StringValue(org.OrgId)
-	date, _ := types.ObjectValue(
-		map[string]attr.Type{
-			"created_at": types.StringType,
-			"updated_at": types.StringType,
-		},
-		map[string]attr.Value{
-			"created_at": types.StringValue(org.Date.CreatedAt),
-			"updated_at": types.StringValue(org.Date.UpdatedAt),
-		},
-	)
-	plan.Date = date
+	plan.ID = types.StringValue(prj.Id)
+	plan.Name = types.StringValue(prj.Name)
+	plan.OrgID = types.StringValue(prj.OrgId)
+	plan.Date = resourceDate{
+		CreatedAt: &prj.Date.CreatedAt,
+		UpdatedAt: &prj.Date.UpdatedAt,
+	}
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, plan)
@@ -144,7 +136,7 @@ func (r *projectResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 
 	// Get refreshed Project value from qernal
-	org, _, err := r.client.ProjectsAPI.ProjectsGet(ctx, state.ID.ValueString()).Execute()
+	prj, _, err := r.client.ProjectsAPI.ProjectsGet(ctx, state.ID.ValueString()).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Project",
@@ -153,18 +145,12 @@ func (r *projectResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	state.Name = types.StringValue(org.Name)
-	state.OrgID = types.StringValue(org.OrgId)
-	state.Date, _ = types.ObjectValue(
-		map[string]attr.Type{
-			"created_at": types.StringType,
-			"updated_at": types.StringType,
-		},
-		map[string]attr.Value{
-			"created_at": types.StringValue(org.Date.CreatedAt),
-			"updated_at": types.StringValue(org.Date.UpdatedAt),
-		},
-	)
+	state.Name = types.StringValue(prj.Name)
+	state.OrgID = types.StringValue(prj.OrgId)
+	state.Date = resourceDate{
+		CreatedAt: &prj.Date.CreatedAt,
+		UpdatedAt: &prj.Date.UpdatedAt,
+	}
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
@@ -201,7 +187,7 @@ func (r *projectResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	// Fetch updated Project
-	org, _, err := r.client.ProjectsAPI.ProjectsGet(ctx, plan.ID.ValueString()).Execute()
+	prj, _, err := r.client.ProjectsAPI.ProjectsGet(ctx, plan.ID.ValueString()).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Project",
@@ -211,18 +197,12 @@ func (r *projectResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	// Update resource state with updated items and timestamp
-	plan.Name = types.StringValue(org.Name)
-	plan.OrgID = types.StringValue(org.OrgId)
-	plan.Date, _ = types.ObjectValue(
-		map[string]attr.Type{
-			"created_at": types.StringType,
-			"updated_at": types.StringType,
-		},
-		map[string]attr.Value{
-			"created_at": types.StringValue(org.Date.CreatedAt),
-			"updated_at": types.StringValue(org.Date.UpdatedAt),
-		},
-	)
+	plan.Name = types.StringValue(prj.Name)
+	plan.OrgID = types.StringValue(prj.OrgId)
+	plan.Date = resourceDate{
+		CreatedAt: &prj.Date.CreatedAt,
+		UpdatedAt: &prj.Date.UpdatedAt,
+	}
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -254,13 +234,8 @@ func (r *projectResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 // ProjectResourceModel maps the resource schema data.
 type ProjectResourceModel struct {
-	ID    types.String          `tfsdk:"id"`
-	Name  types.String          `tfsdk:"name"`
-	OrgID types.String          `tfsdk:"org_id"`
-	Date  basetypes.ObjectValue `tfsdk:"date"`
-}
-
-type ProjectDate struct {
-	CreatedAt types.String `tfsdk:"created_at"`
-	UpdatedAt types.String `tfsdk:"updated_at"`
+	ID    types.String `tfsdk:"id"`
+	Name  types.String `tfsdk:"name"`
+	OrgID types.String `tfsdk:"org_id"`
+	Date  resourceDate `tfsdk:"date"`
 }

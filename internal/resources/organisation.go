@@ -2,12 +2,10 @@ package resources
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
 	qernalclient "qernal-terraform-provider/internal/client"
 )
@@ -67,12 +65,14 @@ func (r *organisationResource) Schema(_ context.Context, _ resource.SchemaReques
 			},
 			"user_id": schema.StringAttribute{
 				Computed: true,
+				Required: false,
 			},
 			"name": schema.StringAttribute{
 				Required: true,
 			},
 			"date": schema.SingleNestedAttribute{
 				Computed: true,
+				Required: false,
 				Attributes: map[string]schema.Attribute{
 					"created_at": schema.StringAttribute{
 						Computed: true,
@@ -111,17 +111,10 @@ func (r *organisationResource) Create(ctx context.Context, req resource.CreateRe
 	plan.ID = types.StringValue(org.Id)
 	plan.Name = types.StringValue(org.Name)
 	plan.UserID = types.StringValue(org.UserId)
-	date, _ := types.ObjectValue(
-		map[string]attr.Type{
-			"created_at": types.StringType,
-			"updated_at": types.StringType,
-		},
-		map[string]attr.Value{
-			"created_at": types.StringValue(org.Date.CreatedAt),
-			"updated_at": types.StringValue(org.Date.UpdatedAt),
-		},
-	)
-	plan.Date = date
+	plan.Date = resourceDate{
+		CreatedAt: &org.Date.CreatedAt,
+		UpdatedAt: &org.Date.UpdatedAt,
+	}
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, plan)
@@ -154,16 +147,10 @@ func (r *organisationResource) Read(ctx context.Context, req resource.ReadReques
 
 	state.Name = types.StringValue(org.Name)
 	state.UserID = types.StringValue(org.UserId)
-	state.Date, _ = types.ObjectValue(
-		map[string]attr.Type{
-			"created_at": types.StringType,
-			"updated_at": types.StringType,
-		},
-		map[string]attr.Value{
-			"created_at": types.StringValue(org.Date.CreatedAt),
-			"updated_at": types.StringValue(org.Date.UpdatedAt),
-		},
-	)
+	state.Date = resourceDate{
+		CreatedAt: &org.Date.CreatedAt,
+		UpdatedAt: &org.Date.UpdatedAt,
+	}
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
@@ -211,16 +198,10 @@ func (r *organisationResource) Update(ctx context.Context, req resource.UpdateRe
 	// Update resource state with updated items and timestamp
 	plan.Name = types.StringValue(org.Name)
 	plan.UserID = types.StringValue(org.UserId)
-	plan.Date, _ = types.ObjectValue(
-		map[string]attr.Type{
-			"created_at": types.StringType,
-			"updated_at": types.StringType,
-		},
-		map[string]attr.Value{
-			"created_at": types.StringValue(org.Date.CreatedAt),
-			"updated_at": types.StringValue(org.Date.UpdatedAt),
-		},
-	)
+	plan.Date = resourceDate{
+		CreatedAt: &org.Date.CreatedAt,
+		UpdatedAt: &org.Date.UpdatedAt,
+	}
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -252,13 +233,13 @@ func (r *organisationResource) Delete(ctx context.Context, req resource.DeleteRe
 
 // organisationResourceModel maps the resource schema data.
 type organisationResourceModel struct {
-	ID     types.String          `tfsdk:"id"`
-	Name   types.String          `tfsdk:"name"`
-	UserID types.String          `tfsdk:"user_id"`
-	Date   basetypes.ObjectValue `tfsdk:"date"`
+	ID     types.String `tfsdk:"id"`
+	Name   types.String `tfsdk:"name"`
+	UserID types.String `tfsdk:"user_id"`
+	Date   resourceDate `tfsdk:"date"`
 }
 
-type organisationDate struct {
-	CreatedAt types.String `tfsdk:"created_at"`
-	UpdatedAt types.String `tfsdk:"updated_at"`
+type resourceDate struct {
+	CreatedAt *string `tfsdk:"created_at"`
+	UpdatedAt *string `tfsdk:"updated_at"`
 }
