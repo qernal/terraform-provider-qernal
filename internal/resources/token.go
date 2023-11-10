@@ -2,12 +2,10 @@ package resources
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
 	qernalclient "qernal-terraform-provider/internal/client"
 )
@@ -70,15 +68,11 @@ func (r *tokenResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 			},
 			"user_id": schema.StringAttribute{
 				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				Required: false,
 			},
 			"expiry_at": schema.StringAttribute{
 				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				Required: false,
 			},
 			"expiry_duration": schema.Int64Attribute{
 				Required: true,
@@ -93,10 +87,10 @@ func (r *tokenResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				Computed: true,
 				Attributes: map[string]schema.Attribute{
 					"created_at": schema.StringAttribute{
-						Computed: true,
+						Optional: true,
 					},
 					"updated_at": schema.StringAttribute{
-						Computed: true,
+						Optional: true,
 					},
 				},
 			},
@@ -133,17 +127,10 @@ func (r *tokenResource) Create(ctx context.Context, req resource.CreateRequest, 
 	plan.ExpiryAt = types.StringValue(*token.ExpiryAt)
 	plan.Token = types.StringValue(*token.Token)
 
-	date, _ := types.ObjectValue(
-		map[string]attr.Type{
-			"created_at": types.StringType,
-			"updated_at": types.StringType,
-		},
-		map[string]attr.Value{
-			"created_at": types.StringValue(token.Date.CreatedAt),
-			"updated_at": types.StringValue(token.Date.UpdatedAt),
-		},
-	)
-	plan.Date = date
+	plan.Date = resourceDate{
+		CreatedAt: &token.Date.CreatedAt,
+		UpdatedAt: &token.Date.UpdatedAt,
+	}
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, plan)
@@ -178,16 +165,10 @@ func (r *tokenResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	state.UserID = types.StringValue(token.UserId)
 	state.ExpiryAt = types.StringValue(*token.ExpiryAt)
 
-	state.Date, _ = types.ObjectValue(
-		map[string]attr.Type{
-			"created_at": types.StringType,
-			"updated_at": types.StringType,
-		},
-		map[string]attr.Value{
-			"created_at": types.StringValue(token.Date.CreatedAt),
-			"updated_at": types.StringValue(token.Date.UpdatedAt),
-		},
-	)
+	state.Date = resourceDate{
+		CreatedAt: &token.Date.CreatedAt,
+		UpdatedAt: &token.Date.UpdatedAt,
+	}
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
@@ -238,16 +219,10 @@ func (r *tokenResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	plan.Name = types.StringValue(token.Name)
 	plan.ExpiryAt = types.StringValue(*token.ExpiryAt)
 
-	plan.Date, _ = types.ObjectValue(
-		map[string]attr.Type{
-			"created_at": types.StringType,
-			"updated_at": types.StringType,
-		},
-		map[string]attr.Value{
-			"created_at": types.StringValue(token.Date.CreatedAt),
-			"updated_at": types.StringValue(token.Date.UpdatedAt),
-		},
-	)
+	plan.Date = resourceDate{
+		CreatedAt: &token.Date.CreatedAt,
+		UpdatedAt: &token.Date.UpdatedAt,
+	}
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -279,11 +254,11 @@ func (r *tokenResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 
 // tokenResourceModel maps the resource schema data.
 type tokenResourceModel struct {
-	ID             types.String          `tfsdk:"id"`
-	Name           types.String          `tfsdk:"name"`
-	UserID         types.String          `tfsdk:"user_id"`
-	ExpiryAt       types.String          `tfsdk:"expiry_at"`
-	ExpiryDuration types.Int64           `tfsdk:"expiry_duration"`
-	Token          types.String          `tfsdk:"token"`
-	Date           basetypes.ObjectValue `tfsdk:"date"`
+	ID             types.String `tfsdk:"id"`
+	Name           types.String `tfsdk:"name"`
+	UserID         types.String `tfsdk:"user_id"`
+	ExpiryAt       types.String `tfsdk:"expiry_at"`
+	ExpiryDuration types.Int64  `tfsdk:"expiry_duration"`
+	Token          types.String `tfsdk:"token"`
+	Date           resourceDate `tfsdk:"date"`
 }
