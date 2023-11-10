@@ -2,12 +2,10 @@ package resources
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
 	qernalclient "qernal-terraform-provider/internal/client"
 )
@@ -62,17 +60,13 @@ func (r *secretResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			"project_id": schema.StringAttribute{
 				Required: true,
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplaceIf(func(ctx context.Context, request planmodifier.StringRequest, response *stringplanmodifier.RequiresReplaceIfFuncResponse) {
-						response.RequiresReplace = false
-					}, "", ""),
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"name": schema.StringAttribute{
 				Required: true,
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplaceIf(func(ctx context.Context, request planmodifier.StringRequest, response *stringplanmodifier.RequiresReplaceIfFuncResponse) {
-						response.RequiresReplace = false
-					}, "", ""),
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"type": schema.StringAttribute{
@@ -100,15 +94,16 @@ func (r *secretResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			},
 			"revision": schema.Int64Attribute{
 				Computed: true,
+				Required: false,
 			},
 			"date": schema.SingleNestedAttribute{
 				Computed: true,
 				Attributes: map[string]schema.Attribute{
 					"created_at": schema.StringAttribute{
-						Computed: true,
+						Optional: true,
 					},
 					"updated_at": schema.StringAttribute{
-						Computed: true,
+						Optional: true,
 					},
 				},
 			},
@@ -187,17 +182,10 @@ func (r *secretResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	plan.Revision = types.Int64Value(int64(secret.Revision))
 
-	date, _ := types.ObjectValue(
-		map[string]attr.Type{
-			"created_at": types.StringType,
-			"updated_at": types.StringType,
-		},
-		map[string]attr.Value{
-			"created_at": types.StringValue(secret.Date.CreatedAt),
-			"updated_at": types.StringValue(secret.Date.UpdatedAt),
-		},
-	)
-	plan.Date = date
+	plan.Date = resourceDate{
+		CreatedAt: &secret.Date.CreatedAt,
+		UpdatedAt: &secret.Date.UpdatedAt,
+	}
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, plan)
@@ -244,16 +232,10 @@ func (r *secretResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 	state.Revision = types.Int64Value(int64(secret.Revision))
 
-	state.Date, _ = types.ObjectValue(
-		map[string]attr.Type{
-			"created_at": types.StringType,
-			"updated_at": types.StringType,
-		},
-		map[string]attr.Value{
-			"created_at": types.StringValue(secret.Date.CreatedAt),
-			"updated_at": types.StringValue(secret.Date.UpdatedAt),
-		},
-	)
+	state.Date = resourceDate{
+		CreatedAt: &secret.Date.CreatedAt,
+		UpdatedAt: &secret.Date.UpdatedAt,
+	}
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
@@ -358,16 +340,10 @@ func (r *secretResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	plan.Revision = types.Int64Value(int64(secret.Revision))
 
-	plan.Date, _ = types.ObjectValue(
-		map[string]attr.Type{
-			"created_at": types.StringType,
-			"updated_at": types.StringType,
-		},
-		map[string]attr.Value{
-			"created_at": types.StringValue(secret.Date.CreatedAt),
-			"updated_at": types.StringValue(secret.Date.UpdatedAt),
-		},
-	)
+	plan.Date = resourceDate{
+		CreatedAt: &secret.Date.CreatedAt,
+		UpdatedAt: &secret.Date.UpdatedAt,
+	}
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -399,12 +375,12 @@ func (r *secretResource) Delete(ctx context.Context, req resource.DeleteRequest,
 
 // secretResourceModel maps the resource schema data.
 type secretResourceModel struct {
-	ProjectID types.String          `tfsdk:"project_id"`
-	Name      types.String          `tfsdk:"name"`
-	Type      types.String          `tfsdk:"type"`
-	Payload   payloadObj            `tfsdk:"payload"`
-	Revision  types.Int64           `tfsdk:"revision"`
-	Date      basetypes.ObjectValue `tfsdk:"date"`
+	ProjectID types.String `tfsdk:"project_id"`
+	Name      types.String `tfsdk:"name"`
+	Type      types.String `tfsdk:"type"`
+	Payload   payloadObj   `tfsdk:"payload"`
+	Revision  types.Int64  `tfsdk:"revision"`
+	Date      resourceDate `tfsdk:"date"`
 }
 
 type payloadObj struct {
