@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
 	qernalclient "qernal-terraform-provider/internal/client"
 )
@@ -111,10 +112,11 @@ func (r *projectResource) Create(ctx context.Context, req resource.CreateRequest
 	plan.ID = types.StringValue(prj.Id)
 	plan.Name = types.StringValue(prj.Name)
 	plan.OrgID = types.StringValue(prj.OrgId)
-	plan.Date = resourceDate{
-		CreatedAt: &prj.Date.CreatedAt,
-		UpdatedAt: &prj.Date.UpdatedAt,
+	date := resourceDate{
+		CreatedAt: prj.Date.CreatedAt,
+		UpdatedAt: prj.Date.UpdatedAt,
 	}
+	plan.Date = date.GetDateObject()
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, plan)
@@ -147,10 +149,11 @@ func (r *projectResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	state.Name = types.StringValue(prj.Name)
 	state.OrgID = types.StringValue(prj.OrgId)
-	state.Date = resourceDate{
-		CreatedAt: &prj.Date.CreatedAt,
-		UpdatedAt: &prj.Date.UpdatedAt,
+	date := resourceDate{
+		CreatedAt: prj.Date.CreatedAt,
+		UpdatedAt: prj.Date.UpdatedAt,
 	}
+	state.Date = date.GetDateObject()
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
@@ -199,10 +202,11 @@ func (r *projectResource) Update(ctx context.Context, req resource.UpdateRequest
 	// Update resource state with updated items and timestamp
 	plan.Name = types.StringValue(prj.Name)
 	plan.OrgID = types.StringValue(prj.OrgId)
-	plan.Date = resourceDate{
-		CreatedAt: &prj.Date.CreatedAt,
-		UpdatedAt: &prj.Date.UpdatedAt,
+	date := resourceDate{
+		CreatedAt: prj.Date.CreatedAt,
+		UpdatedAt: prj.Date.UpdatedAt,
 	}
+	plan.Date = date.GetDateObject()
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -234,8 +238,8 @@ func (r *projectResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 // ProjectResourceModel maps the resource schema data.
 type ProjectResourceModel struct {
-	ID    types.String `tfsdk:"id"`
-	Name  types.String `tfsdk:"name"`
-	OrgID types.String `tfsdk:"org_id"`
-	Date  resourceDate `tfsdk:"date"`
+	ID    types.String          `tfsdk:"id"`
+	Name  types.String          `tfsdk:"name"`
+	OrgID types.String          `tfsdk:"org_id"`
+	Date  basetypes.ObjectValue `tfsdk:"date"`
 }

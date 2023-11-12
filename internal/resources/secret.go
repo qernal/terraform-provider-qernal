@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
 	qernalclient "qernal-terraform-provider/internal/client"
 )
@@ -98,6 +99,7 @@ func (r *secretResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			},
 			"date": schema.SingleNestedAttribute{
 				Computed: true,
+				Required: false,
 				Attributes: map[string]schema.Attribute{
 					"created_at": schema.StringAttribute{
 						Optional: true,
@@ -182,10 +184,11 @@ func (r *secretResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	plan.Revision = types.Int64Value(int64(secret.Revision))
 
-	plan.Date = resourceDate{
-		CreatedAt: &secret.Date.CreatedAt,
-		UpdatedAt: &secret.Date.UpdatedAt,
+	date := resourceDate{
+		CreatedAt: secret.Date.CreatedAt,
+		UpdatedAt: secret.Date.UpdatedAt,
 	}
+	plan.Date = date.GetDateObject()
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, plan)
@@ -232,10 +235,11 @@ func (r *secretResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 	state.Revision = types.Int64Value(int64(secret.Revision))
 
-	state.Date = resourceDate{
-		CreatedAt: &secret.Date.CreatedAt,
-		UpdatedAt: &secret.Date.UpdatedAt,
+	date := resourceDate{
+		CreatedAt: secret.Date.CreatedAt,
+		UpdatedAt: secret.Date.UpdatedAt,
 	}
+	state.Date = date.GetDateObject()
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
@@ -340,10 +344,11 @@ func (r *secretResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	plan.Revision = types.Int64Value(int64(secret.Revision))
 
-	plan.Date = resourceDate{
-		CreatedAt: &secret.Date.CreatedAt,
-		UpdatedAt: &secret.Date.UpdatedAt,
+	date := resourceDate{
+		CreatedAt: secret.Date.CreatedAt,
+		UpdatedAt: secret.Date.UpdatedAt,
 	}
+	plan.Date = date.GetDateObject()
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -375,12 +380,12 @@ func (r *secretResource) Delete(ctx context.Context, req resource.DeleteRequest,
 
 // secretResourceModel maps the resource schema data.
 type secretResourceModel struct {
-	ProjectID types.String `tfsdk:"project_id"`
-	Name      types.String `tfsdk:"name"`
-	Type      types.String `tfsdk:"type"`
-	Payload   payloadObj   `tfsdk:"payload"`
-	Revision  types.Int64  `tfsdk:"revision"`
-	Date      resourceDate `tfsdk:"date"`
+	ProjectID types.String          `tfsdk:"project_id"`
+	Name      types.String          `tfsdk:"name"`
+	Type      types.String          `tfsdk:"type"`
+	Payload   payloadObj            `tfsdk:"payload"`
+	Revision  types.Int64           `tfsdk:"revision"`
+	Date      basetypes.ObjectValue `tfsdk:"date"`
 }
 
 type payloadObj struct {
