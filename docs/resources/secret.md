@@ -74,7 +74,7 @@ Optional:
 <a id="nestedatt--date"></a>
 ### Nested Schema for `date`
 
-Read-Only:
+Optional:
 
 - `created_at` (String)
 - `updated_at` (String)
