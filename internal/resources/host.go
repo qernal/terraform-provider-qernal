@@ -136,8 +136,8 @@ func (r *hostResource) Create(ctx context.Context, req resource.CreateRequest, r
 	if err != nil {
 		resData, _ := qernalclient.ParseResponseData(httpRes)
 		resp.Diagnostics.AddError(
-			"Error creating Secret",
-			"Could not create Secret, unexpected error: "+err.Error()+" with"+fmt.Sprintf(", detail: %v", resData))
+			"Error creating Host",
+			"Could not create Host, unexpected error: "+err.Error()+" with"+fmt.Sprintf(", detail: %v", resData))
 		return
 	}
 
@@ -180,8 +180,8 @@ func (r *hostResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	host, _, err := r.client.HostsAPI.ProjectsHostsGet(ctx, state.ProjectID.ValueString(), state.Name.ValueString()).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Reading Secret",
-			"Could not read Secret Name "+state.Name.ValueString()+": "+err.Error(),
+			"Error Reading Host",
+			"Could not read Host Name "+state.Name.ValueString()+": "+err.Error(),
 		)
 		return
 	}
