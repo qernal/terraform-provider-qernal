@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
 	qernalclient "qernal-terraform-provider/internal/client"
+	pkgtypes "qernal-terraform-provider/pkg/types"
 )
 
 import (
@@ -144,11 +145,11 @@ func (r *hostResource) Create(ctx context.Context, req resource.CreateRequest, r
 	plan.ID = types.StringValue(host.Id)
 	plan.Name = types.StringValue(host.Host)
 	plan.ProjectID = types.StringValue(host.ProjectId)
-	plan.Certificate = types.StringValue(*host.Certificate)
+	plan.Certificate = types.StringValue(pkgtypes.StringValueFromPointer(host.Certificate))
 	plan.ReadOnly = types.BoolValue(host.ReadOnly)
 	plan.Disabled = types.BoolValue(host.Disabled)
 	plan.TxtVerification = types.StringValue(host.TxtVerification)
-	plan.VerifiedAt = types.StringValue(*host.VerifiedAt)
+	plan.VerifiedAt = types.StringValue(pkgtypes.StringValueFromPointer(host.VerifiedAt))
 	plan.VerificationStatus = types.StringValue(string(host.VerificationStatus))
 
 	date := resourceDate{
@@ -188,11 +189,11 @@ func (r *hostResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	state.Name = types.StringValue(host.Host)
 	state.ProjectID = types.StringValue(host.ProjectId)
-	state.Certificate = types.StringValue(*host.Certificate)
+	state.Certificate = types.StringValue(pkgtypes.StringValueFromPointer(host.Certificate))
 	state.ReadOnly = types.BoolValue(host.ReadOnly)
 	state.Disabled = types.BoolValue(host.Disabled)
 	state.TxtVerification = types.StringValue(host.TxtVerification)
-	state.VerifiedAt = types.StringValue(*host.VerifiedAt)
+	state.VerifiedAt = types.StringValue(pkgtypes.StringValueFromPointer(host.VerifiedAt))
 	state.VerificationStatus = types.StringValue(string(host.VerificationStatus))
 
 	date := resourceDate{
@@ -249,11 +250,11 @@ func (r *hostResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	plan.Name = types.StringValue(host.Host)
 	plan.ProjectID = types.StringValue(host.ProjectId)
-	plan.Certificate = types.StringValue(*host.Certificate)
+	plan.Certificate = types.StringValue(pkgtypes.StringValueFromPointer(host.Certificate))
 	plan.ReadOnly = types.BoolValue(host.ReadOnly)
 	plan.Disabled = types.BoolValue(host.Disabled)
 	plan.TxtVerification = types.StringValue(host.TxtVerification)
-	plan.VerifiedAt = types.StringValue(*host.VerifiedAt)
+	plan.VerifiedAt = types.StringValue(pkgtypes.StringValueFromPointer(host.VerifiedAt))
 	plan.VerificationStatus = types.StringValue(string(host.VerificationStatus))
 
 	date := resourceDate{
