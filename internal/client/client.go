@@ -7,7 +7,7 @@ import (
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
 	"io"
 	"net/http"
-	"qernal-terraform-provider/pkg/oauth"
+	"terraform-provider-qernal/pkg/oauth"
 )
 
 type QernalAPIClient struct {

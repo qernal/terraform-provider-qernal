@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
-	qernalclient "qernal-terraform-provider/internal/client"
+	qernalclient "terraform-provider-qernal/internal/client"
 )
 
 import (

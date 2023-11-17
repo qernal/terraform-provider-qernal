@@ -5,7 +5,7 @@ import (
 	"flag"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"log"
-	"qernal-terraform-provider/internal/provider"
+	"terraform-provider-qernal/internal/provider"
 )
 
 var version string = "dev"
