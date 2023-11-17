@@ -1,4 +1,4 @@
-module qernal-terraform-provider
+module terraform-provider-qernal
 
 go 1.21.3
 

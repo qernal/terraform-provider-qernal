@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
-	qernalclient "qernal-terraform-provider/internal/client"
-	pkgtypes "qernal-terraform-provider/pkg/types"
+	qernalclient "terraform-provider-qernal/internal/client"
+	pkgtypes "terraform-provider-qernal/pkg/types"
 )
 
 import (
@@ -147,7 +147,7 @@ func (r *hostResource) Create(ctx context.Context, req resource.CreateRequest, r
 	plan.ProjectID = types.StringValue(host.ProjectId)
 	plan.Certificate = types.StringValue(pkgtypes.StringValueFromPointer(host.Certificate))
 	plan.ReadOnly = types.BoolValue(host.ReadOnly)
-	plan.Disabled = types.BoolValue(host.Disabled)
+	//plan.Disabled = types.BoolValue(host.Disabled)
 	plan.TxtVerification = types.StringValue(host.TxtVerification)
 	plan.VerifiedAt = types.StringValue(pkgtypes.StringValueFromPointer(host.VerifiedAt))
 	plan.VerificationStatus = types.StringValue(string(host.VerificationStatus))

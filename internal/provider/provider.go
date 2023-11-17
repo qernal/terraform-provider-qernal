@@ -5,8 +5,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"os"
-	qernalclient "qernal-terraform-provider/internal/client"
-	qernalresource "qernal-terraform-provider/internal/resources"
+	qernalclient "terraform-provider-qernal/internal/client"
+	qernalresource "terraform-provider-qernal/internal/resources"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
