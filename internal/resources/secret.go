@@ -313,7 +313,6 @@ func (r *secretResource) Update(ctx context.Context, req resource.UpdateRequest,
 			"Error updating Secret",
 			"Could not update Secret, unexpected error: "+err.Error()+" with"+fmt.Sprintf(", detail: %v", resData))
 		return
-		return
 	}
 
 	// Fetch updated Project
