@@ -3,7 +3,6 @@ package resources
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -118,10 +117,10 @@ func (r *organisationResource) Create(ctx context.Context, req resource.CreateRe
 		CreatedAt: org.Date.CreatedAt,
 		UpdatedAt: org.Date.UpdatedAt,
 	}
+	plan.Date = date.GetDateObject()
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, plan)
-	diags = resp.State.SetAttribute(ctx, path.Root("date"), date.GetDateObject())
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -155,15 +154,14 @@ func (r *organisationResource) Read(ctx context.Context, req resource.ReadReques
 		CreatedAt: org.Date.CreatedAt,
 		UpdatedAt: org.Date.UpdatedAt,
 	}
+	state.Date = date.GetDateObject()
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
-	diags = resp.State.SetAttribute(ctx, path.Root("date"), date.GetDateObject())
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
 }
 
 // Update updates the resource and sets the updated Terraform state on success.
@@ -210,11 +208,11 @@ func (r *organisationResource) Update(ctx context.Context, req resource.UpdateRe
 	plan.Date = date.GetDateObject()
 
 	diags = resp.State.Set(ctx, plan)
-
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
 }
 
 // Delete deletes the resource and removes the Terraform state on success.
@@ -251,57 +249,6 @@ type resourceDate struct {
 	UpdatedAt string `tfsdk:"updated_at"`
 }
 
-//	func (r resourceDate) Type(ctx context.Context) attr.Type {
-//		return basetypes.ObjectType{
-//			AttrTypes: map[string]attr.Type{
-//				"created_at": basetypes.StringType{},
-//				"updated_at": basetypes.StringType{},
-//			},
-//		}
-//	}
-//
-//	func (r resourceDate) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-//		return tftypes.NewValue(tftypes.Object{
-//			AttributeTypes: map[string]tftypes.Type{
-//				"created_at": tftypes.String,
-//				"updated_at": tftypes.String,
-//			},
-//		}, map[string]string{
-//			"created_at": r.CreatedAt.ValueString(),
-//			"updated_at": r.UpdatedAt.ValueString(),
-//		}), nil
-//	}
-//
-//	func (r resourceDate) Equal(value attr.Value) bool {
-//		return true
-//	}
-//
-//	func (r resourceDate) IsNull() bool {
-//		return false
-//	}
-//
-//	func (r resourceDate) IsUnknown() bool {
-//		return false
-//
-// }
-//
-//	func (r resourceDate) String() string {
-//		return ""
-//	}
-//
-//	func (r resourceDate) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
-//		elementTypes := map[string]attr.Type{
-//			"created_at": types.StringType,
-//			"updated_at": types.StringType,
-//		}
-//		elements := map[string]attr.Value{
-//			"created_at": types.StringValue(r.CreatedAt.ValueString()),
-//			"updated_at": types.StringValue(r.UpdatedAt.ValueString()),
-//		}
-//		objectValue, _ := types.ObjectValue(elementTypes, elements)
-//
-//		return objectValue, diag.Diagnostics{}
-//	}
 func (r resourceDate) GetDateObject() basetypes.ObjectValue {
 	elementTypes := map[string]attr.Type{
 		"created_at": types.StringType,
@@ -315,6 +262,3 @@ func (r resourceDate) GetDateObject() basetypes.ObjectValue {
 
 	return objectValue
 }
-
-//
-//var _ basetypes.ObjectValuable = &resourceDate{}
