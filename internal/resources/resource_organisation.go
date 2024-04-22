@@ -1,20 +1,18 @@
 package resources
 
 import (
+	"context"
 	"fmt"
+	qernalclient "terraform-provider-qernal/internal/client"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
-	qernalclient "terraform-provider-qernal/internal/client"
-)
-
-import (
-	"context"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -143,7 +141,7 @@ func (r *organisationResource) Read(ctx context.Context, req resource.ReadReques
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading organisation",
-			"Could not read organisation ID "+state.ID.ValueString()+": "+err.Error(),
+			"Could not read organisation ID "+state.ID.ValueString()+": "+err.Error()+"got "+org.Name,
 		)
 		return
 	}
