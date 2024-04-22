@@ -2,11 +2,13 @@ package provider
 
 import (
 	"context"
-	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"os"
 	qernalclient "terraform-provider-qernal/internal/client"
 	qernalresource "terraform-provider-qernal/internal/resources"
+
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -63,6 +65,9 @@ func (p *qernalProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 
 func (p *qernalProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	// Retrieve provider data from configuration
+	ctx = tflog.SetField(ctx, "some", "stuff")
+
+	tflog.Info(ctx, "here's the rest")
 	var config qernalProviderModel
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
@@ -152,6 +157,7 @@ func (p *qernalProvider) Resources(_ context.Context) []func() resource.Resource
 		qernalresource.NewOrganisationResource,
 		qernalresource.NewProjectResource,
 		qernalresource.NewSecretResource,
+		qernalresource.NewregistrySecretResource,
 		qernalresource.NewTokenResource,
 		qernalresource.NewHostResource,
 	}
