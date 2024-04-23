@@ -3,8 +3,9 @@ package oauth
 import (
 	"context"
 	"errors"
-	"golang.org/x/oauth2/clientcredentials"
 	"strings"
+
+	"golang.org/x/oauth2/clientcredentials"
 )
 
 type OAuthClient interface {
