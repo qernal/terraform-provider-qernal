@@ -330,8 +330,12 @@ func (r *registrySecretResource) Delete(ctx context.Context, req resource.Delete
 	}
 
 	// Delete existing secret
-	_, _, err := r.client.SecretsAPI.ProjectsSecretsDelete(ctx, state.ProjectID.String(), state.Name.ValueString()).Execute()
+	_, httpRes, err := r.client.SecretsAPI.ProjectsSecretsDelete(ctx, state.ProjectID.ValueString(), state.Name.ValueString()).Execute()
 	if err != nil {
+		resData, _ := qernalclient.ParseResponseData(httpRes)
+
+		ctx = tflog.SetField(ctx, "raw http response", resData)
+		tflog.Error(ctx, " deletion failed")
 		resp.Diagnostics.AddError(
 			"Error Deleting secret",
 			"Could not delete secret, unexpected error: "+err.Error(),
