@@ -14,14 +14,10 @@ description: |-
 
 ```terraform
 # Configuration-based authentication
-variable "token" {
-
-}
-
 provider "qernal" {
   host_chaos = "https://hydra.qernal-bld.dev"
   host_hydra = "https://chaos.qernal-bld.dev"
-  token      = var.token
+  token      = "client_id@client_secret"
 }
 ```
 

@@ -21,7 +21,6 @@ description: |-
 - `name` (String)
 - `project_id` (String)
 - `registry_url` (String) The URL of the container registry (e.g., ghcr.io)
-- `type` (String)
 
 ### Read-Only
 
