@@ -158,6 +158,7 @@ func (p *qernalProvider) Resources(_ context.Context) []func() resource.Resource
 		qernalresource.NewProjectResource,
 		qernalresource.NewSecretResource,
 		qernalresource.NewregistrySecretResource,
+		qernalresource.NewenvironmentsecretResource,
 		qernalresource.NewTokenResource,
 		qernalresource.NewHostResource,
 	}
