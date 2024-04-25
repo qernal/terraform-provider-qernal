@@ -104,23 +104,13 @@ func (r *environmentsecretResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	// Fetch dek key
-	keyRes, httpres, err := r.client.SecretsAPI.ProjectsSecretsGet(ctx, plan.ProjectID.ValueString(), "dek").Execute()
+	keyRes, err := r.client.FetchDek(ctx, plan.ProjectID.ValueString())
 	if err != nil {
-		resData, httperr := qernalclient.ParseResponseData(httpres)
-		ctx = tflog.SetField(ctx, "http response", httperr)
-		tflog.Error(ctx, "response from server")
-		if httperr != nil {
-			resp.Diagnostics.AddError(
-				"Error creating Secret",
-				"Could not obtain dek key, unexpected http error: "+err.Error())
-			return
-		}
 		resp.Diagnostics.AddError(
 			"Error creating Secret",
-			"Could not obtain encryption key, unexpected error: "+err.Error()+" with"+fmt.Sprintf(", detail: %v", resData))
+			"Could not obtain encryption key: "+err.Error())
 		return
 	}
-
 	// Create new secret
 	secretType := openapiclient.SecretCreateType(openapiclient.SECRETCREATETYPE_ENVIRONMENT)
 	payload := openapiclient.SecretCreatePayload{}
@@ -224,20 +214,11 @@ func (r *environmentsecretResource) Update(ctx context.Context, req resource.Upd
 	secret := plan.Value.ValueString()
 
 	// Fetch dek key
-	keyRes, httpres, err := r.client.SecretsAPI.ProjectsSecretsGet(ctx, plan.ProjectID.ValueString(), "dek").Execute()
+	keyRes, err := r.client.FetchDek(ctx, plan.ProjectID.ValueString())
 	if err != nil {
-		resData, httperr := qernalclient.ParseResponseData(httpres)
-		ctx = tflog.SetField(ctx, "http response", httperr)
-		tflog.Error(ctx, "response from server")
-		if httperr != nil {
-			resp.Diagnostics.AddError(
-				"Error creating Secret",
-				"Could not obtain dek key, unexpected http error: "+err.Error())
-			return
-		}
 		resp.Diagnostics.AddError(
 			"Error creating Secret",
-			"Could not obtain encryption key, unexpected error: "+err.Error()+" with"+fmt.Sprintf(", detail: %v", resData))
+			"Could not obtain encryption key: "+err.Error())
 		return
 	}
 
