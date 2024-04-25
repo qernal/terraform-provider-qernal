@@ -109,20 +109,11 @@ func (r *registrySecretResource) Create(ctx context.Context, req resource.Create
 	}
 
 	// Fetch dek key
-	keyRes, httpres, err := r.client.SecretsAPI.ProjectsSecretsGet(ctx, plan.ProjectID.ValueString(), "dek").Execute()
+	keyRes, err := r.client.FetchDek(ctx, plan.ProjectID.ValueString())
 	if err != nil {
-		resData, httperr := qernalclient.ParseResponseData(httpres)
-		ctx = tflog.SetField(ctx, "http response", httperr)
-		tflog.Error(ctx, "response from server")
-		if httperr != nil {
-			resp.Diagnostics.AddError(
-				"Error creating Secret",
-				"Could not obtain dek key, unexpected http error: "+err.Error())
-			return
-		}
 		resp.Diagnostics.AddError(
 			"Error creating Secret",
-			"Could not obtain encryption key, unexpected error: "+err.Error()+" with"+fmt.Sprintf(", detail: %v", resData))
+			"Could not obtain encryption key: "+err.Error())
 		return
 	}
 
@@ -251,23 +242,13 @@ func (r *registrySecretResource) Update(ctx context.Context, req resource.Update
 	payload.SecretRegistry = openapiclient.NewSecretRegistry(registry, registryValue)
 
 	// Fetch dek key
-	keyRes, httpres, err := r.client.SecretsAPI.ProjectsSecretsGet(ctx, plan.ProjectID.ValueString(), "dek").Execute()
+	keyRes, err := r.client.FetchDek(ctx, plan.ProjectID.ValueString())
 	if err != nil {
-		resData, httperr := qernalclient.ParseResponseData(httpres)
-		ctx = tflog.SetField(ctx, "http response", httperr)
-		tflog.Error(ctx, "response from server")
-		if httperr != nil {
-			resp.Diagnostics.AddError(
-				"Error creating Secret",
-				"Could not obtain dek key, unexpected http error: "+err.Error())
-			return
-		}
 		resp.Diagnostics.AddError(
 			"Error creating Secret",
-			"Could not obtain encryption key, unexpected error: "+err.Error()+" with"+fmt.Sprintf(", detail: %v", resData))
+			"Could not obtain encryption key: "+err.Error())
 		return
 	}
-
 	encryption := fmt.Sprintf(`keys/dek/%d`, keyRes.Revision)
 
 	_, httpRes, err := r.client.SecretsAPI.ProjectsSecretsUpdate(ctx, plan.ProjectID.ValueString(), plan.Name.ValueString()).SecretBodyPatch(openapiclient.SecretBodyPatch{
