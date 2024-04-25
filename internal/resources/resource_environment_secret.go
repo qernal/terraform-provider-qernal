@@ -17,20 +17,20 @@ import (
 )
 
 var (
-	_ resource.Resource              = &registrySecretResource{}
-	_ resource.ResourceWithConfigure = &registrySecretResource{}
+	_ resource.Resource              = &environmentsecretResource{}
+	_ resource.ResourceWithConfigure = &environmentsecretResource{}
 )
 
-func NewregistrySecretResource() resource.Resource {
-	return &registrySecretResource{}
+func NewenvironmentsecretResource() resource.Resource {
+	return &environmentsecretResource{}
 
 }
 
-type registrySecretResource struct {
+type environmentsecretResource struct {
 	client qernalclient.QernalAPIClient
 }
 
-func (r *registrySecretResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *environmentsecretResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -47,12 +47,12 @@ func (r *registrySecretResource) Configure(ctx context.Context, req resource.Con
 	r.client = client
 }
 
-func (r *registrySecretResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_registry_secret"
+func (r *environmentsecretResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_environment_secret"
 }
 
 // Schema defines the schema for the resource.
-func (r *registrySecretResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *environmentsecretResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"project_id": schema.StringAttribute{
@@ -61,20 +61,15 @@ func (r *registrySecretResource) Schema(_ context.Context, _ resource.SchemaRequ
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+
 			"name": schema.StringAttribute{
-				Required: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"registry_url": schema.StringAttribute{
 				Required:    true,
-				Description: "The URL of the container registry (e.g., ghcr.io)",
+				Description: "Name of the envrionment variable. e.g( PORT)",
 			},
 
-			"auth_token": schema.StringAttribute{
+			"value": schema.StringAttribute{
 				Required:    true,
-				Description: " authentication token for the registry",
+				Description: "Value of the environment variable",
 			},
 
 			"revision": schema.Int64Attribute{
@@ -98,10 +93,10 @@ func (r *registrySecretResource) Schema(_ context.Context, _ resource.SchemaRequ
 }
 
 // Create creates the resource and sets the initial Terraform state.
-func (r *registrySecretResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *environmentsecretResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 
 	// Retrieve values from plan
-	var plan registrySecretResourceModel
+	var plan environmentsecretResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -116,34 +111,25 @@ func (r *registrySecretResource) Create(ctx context.Context, req resource.Create
 			"Could not obtain encryption key: "+err.Error())
 		return
 	}
-
 	// Create new secret
-	secretType := openapiclient.SecretCreateType(openapiclient.SECRETCREATETYPE_REGISTRY)
+	secretType := openapiclient.SecretCreateType(openapiclient.SECRETCREATETYPE_ENVIRONMENT)
 	payload := openapiclient.SecretCreatePayload{}
 
-	registry := plan.RegistryUrl.ValueString()
-
 	// encrypt secret
-	registryValue := plan.AuthToken.ValueString()
+	secret := plan.Value.ValueString()
 
-	encryptedToken, err := client.EncryptLocalSecret(keyRes.Payload.SecretMetaResponseDek.Public, registryValue)
+	encryptedSecret, err := client.EncryptLocalSecret(keyRes.Payload.SecretMetaResponseDek.Public, secret)
 	if err != nil {
 		resp.Diagnostics.AddError("unable to encrypt local secret", "encryption failed with:"+err.Error())
 	}
 
-	payload.SecretRegistry = &openapiclient.SecretRegistry{
-		Registry:      registry,
-		RegistryValue: encryptedToken,
-	}
+	payload.SecretEnvironment = openapiclient.NewSecretEnvironment(encryptedSecret)
 
 	encryptionRef := fmt.Sprintf(`keys/dek/%d`, keyRes.Revision)
 
-	secret, httpRes, err := r.client.SecretsAPI.ProjectsSecretsCreate(ctx, plan.ProjectID.ValueString()).SecretBody(openapiclient.SecretBody{
-		Name:       plan.Name.ValueString(),
-		Type:       secretType,
-		Payload:    payload,
-		Encryption: encryptionRef,
-	}).Execute()
+	secretBody := openapiclient.NewSecretBody(plan.Name.ValueString(), secretType, payload, encryptionRef)
+
+	secretRes, httpRes, err := r.client.SecretsAPI.ProjectsSecretsCreate(ctx, plan.ProjectID.ValueString()).SecretBody(*secretBody).Execute()
 
 	if err != nil {
 		resData, _ := qernalclient.ParseResponseData(httpRes)
@@ -153,13 +139,13 @@ func (r *registrySecretResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	plan.Name = types.StringValue(secret.Name)
+	plan.Name = types.StringValue(secretRes.Name)
 
-	plan.Revision = types.Int64Value(int64(secret.Revision))
+	plan.Revision = types.Int64Value(int64(secretRes.Revision))
 
 	date := resourceDate{
-		CreatedAt: secret.Date.CreatedAt,
-		UpdatedAt: secret.Date.UpdatedAt,
+		CreatedAt: secretRes.Date.CreatedAt,
+		UpdatedAt: secretRes.Date.UpdatedAt,
 	}
 	plan.Date = date.GetDateObject()
 
@@ -173,9 +159,9 @@ func (r *registrySecretResource) Create(ctx context.Context, req resource.Create
 }
 
 // Read refreshes the Terraform state with the latest data.
-func (r *registrySecretResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *environmentsecretResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	// Get current state
-	var state registrySecretResourceModel
+	var state environmentsecretResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -195,16 +181,6 @@ func (r *registrySecretResource) Read(ctx context.Context, req resource.ReadRequ
 
 	state.Name = types.StringValue(secret.Name)
 
-	// state.Type = types.StringValue(string(openapiclient.SECRETCREATETYPE_REGISTRY))
-
-	planPayload := payloadObj{}
-
-	planPayload.Registry = &secret.Payload.SecretMetaResponseRegistryPayload.Registry
-
-	// state.Payload = planPayload
-
-	state.Revision = types.Int64Value(int64(secret.Revision))
-
 	date := resourceDate{
 		CreatedAt: secret.Date.CreatedAt,
 		UpdatedAt: secret.Date.UpdatedAt,
@@ -221,10 +197,10 @@ func (r *registrySecretResource) Read(ctx context.Context, req resource.ReadRequ
 }
 
 // Update updates the resource and sets the updated Terraform state on success.
-func (r *registrySecretResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *environmentsecretResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 
 	// Retrieve values from plan
-	var plan registrySecretResourceModel
+	var plan environmentsecretResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -232,14 +208,10 @@ func (r *registrySecretResource) Update(ctx context.Context, req resource.Update
 	}
 
 	// Update existing secret
-	secretType := openapiclient.SecretCreateType(openapiclient.SECRETCREATETYPE_REGISTRY)
+	secretType := openapiclient.SecretCreateType(openapiclient.SECRETCREATETYPE_ENVIRONMENT)
 	payload := openapiclient.SecretCreatePayload{}
 
-	registry := plan.RegistryUrl.String()
-
-	registryValue := plan.AuthToken.String()
-
-	payload.SecretRegistry = openapiclient.NewSecretRegistry(registry, registryValue)
+	secret := plan.Value.ValueString()
 
 	// Fetch dek key
 	keyRes, err := r.client.FetchDek(ctx, plan.ProjectID.ValueString())
@@ -249,6 +221,16 @@ func (r *registrySecretResource) Update(ctx context.Context, req resource.Update
 			"Could not obtain encryption key: "+err.Error())
 		return
 	}
+
+	// encrypt secret
+
+	encryptedSecret, err := client.EncryptLocalSecret(keyRes.Payload.SecretMetaResponseDek.Public, secret)
+	if err != nil {
+		resp.Diagnostics.AddError("unable to encrypt local secret", "encryption failed with:"+err.Error())
+	}
+
+	payload.SecretEnvironment = openapiclient.NewSecretEnvironment(encryptedSecret)
+
 	encryption := fmt.Sprintf(`keys/dek/%d`, keyRes.Revision)
 
 	_, httpRes, err := r.client.SecretsAPI.ProjectsSecretsUpdate(ctx, plan.ProjectID.ValueString(), plan.Name.ValueString()).SecretBodyPatch(openapiclient.SecretBodyPatch{
@@ -265,7 +247,7 @@ func (r *registrySecretResource) Update(ctx context.Context, req resource.Update
 	}
 
 	// Fetch updated Project
-	secret, _, err := r.client.SecretsAPI.ProjectsSecretsGet(ctx, plan.ProjectID.ValueString(), plan.Name.ValueString()).Execute()
+	secretRes, _, err := r.client.SecretsAPI.ProjectsSecretsGet(ctx, plan.ProjectID.ValueString(), plan.Name.ValueString()).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Secret",
@@ -275,21 +257,15 @@ func (r *registrySecretResource) Update(ctx context.Context, req resource.Update
 	}
 
 	// Update resource state with updated items and timestamp
-	plan.Name = types.StringValue(secret.Name)
-
-	// plan.Type = types.StringValue(string(secret.Type))
-
-	planPayload := payloadObj{}
-
-	planPayload.Registry = &secret.Payload.SecretMetaResponseRegistryPayload.Registry
+	plan.Name = types.StringValue(secretRes.Name)
 
 	// plan.Payload = planPayload
 
-	plan.Revision = types.Int64Value(int64(secret.Revision))
+	plan.Revision = types.Int64Value(int64(secretRes.Revision))
 
 	date := resourceDate{
-		CreatedAt: secret.Date.CreatedAt,
-		UpdatedAt: secret.Date.UpdatedAt,
+		CreatedAt: secretRes.Date.CreatedAt,
+		UpdatedAt: secretRes.Date.UpdatedAt,
 	}
 	plan.Date = date.GetDateObject()
 
@@ -301,9 +277,9 @@ func (r *registrySecretResource) Update(ctx context.Context, req resource.Update
 }
 
 // Delete deletes the resource and removes the Terraform state on success.
-func (r *registrySecretResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *environmentsecretResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	// Retrieve values from state
-	var state registrySecretResourceModel
+	var state environmentsecretResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -326,18 +302,10 @@ func (r *registrySecretResource) Delete(ctx context.Context, req resource.Delete
 }
 
 // secretResourceModel maps the resource schema data.
-type registrySecretResourceModel struct {
-	ProjectID types.String `tfsdk:"project_id"`
-	Name      types.String `tfsdk:"name"`
-	// Type        types.String          `tfsdk:"type"`
-	// Payload     payloadObj            `tfsdk:"payload"`
-	RegistryUrl types.String          `tfsdk:"registry_url"`
-	AuthToken   types.String          `tfsdk:"auth_token"`
-	Revision    types.Int64           `tfsdk:"revision"`
-	Date        basetypes.ObjectValue `tfsdk:"date"`
+type environmentsecretResourceModel struct {
+	ProjectID types.String          `tfsdk:"project_id"`
+	Name      types.String          `tfsdk:"name"`
+	Value     types.String          `tfsdk:"value"`
+	Revision  types.Int64           `tfsdk:"revision"`
+	Date      basetypes.ObjectValue `tfsdk:"date"`
 }
-
-// type payloadObj struct {
-// 	Registry      *string `tfsdk:"registry"`
-// 	RegistryValue *string `tfsdk:"registry_value"`
-// }
