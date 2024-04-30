@@ -17,20 +17,20 @@ import (
 )
 
 var (
-	_ resource.Resource              = &environmentSecretResource{}
-	_ resource.ResourceWithConfigure = &environmentSecretResource{}
+	_ resource.Resource              = &certificateSecretResource{}
+	_ resource.ResourceWithConfigure = &certificateSecretResource{}
 )
 
-func NewenvironmentSecretResource() resource.Resource {
-	return &environmentSecretResource{}
+func NewcertificateSecretResource() resource.Resource {
+	return &certificateSecretResource{}
 
 }
 
-type environmentSecretResource struct {
+type certificateSecretResource struct {
 	client qernalclient.QernalAPIClient
 }
 
-func (r *environmentSecretResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *certificateSecretResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -47,12 +47,12 @@ func (r *environmentSecretResource) Configure(ctx context.Context, req resource.
 	r.client = client
 }
 
-func (r *environmentSecretResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_environment_secret"
+func (r *certificateSecretResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_certificate_secret"
 }
 
 // Schema defines the schema for the resource.
-func (r *environmentSecretResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *certificateSecretResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"project_id": schema.StringAttribute{
@@ -64,12 +64,19 @@ func (r *environmentSecretResource) Schema(_ context.Context, _ resource.SchemaR
 
 			"name": schema.StringAttribute{
 				Required:    true,
-				Description: "Name of the envrionment variable. e.g( PORT)",
+				Description: "Name of the certificate",
 			},
 
-			"value": schema.StringAttribute{
+			"certificate": schema.StringAttribute{
 				Required:    true,
-				Description: "Value of the environment variable",
+				Description: "base64 encoded certificate public key",
+				Sensitive:   true,
+			},
+
+			"certificate_value": schema.StringAttribute{
+				Required:    true,
+				Description: "base64 encoded certificate private key",
+				Sensitive:   true,
 			},
 
 			"revision": schema.Int64Attribute{
@@ -93,10 +100,10 @@ func (r *environmentSecretResource) Schema(_ context.Context, _ resource.SchemaR
 }
 
 // Create creates the resource and sets the initial Terraform state.
-func (r *environmentSecretResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *certificateSecretResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 
 	// Retrieve values from plan
-	var plan environmentSecretResourceModel
+	var plan certificatetsecretResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -112,18 +119,18 @@ func (r *environmentSecretResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 	// Create new secret
-	secretType := openapiclient.SecretCreateType(openapiclient.SECRETCREATETYPE_ENVIRONMENT)
+	secretType := openapiclient.SecretCreateType(openapiclient.SECRETCREATETYPE_CERTIFICATE)
 	payload := openapiclient.SecretCreatePayload{}
 
 	// encrypt secret
-	secret := plan.Value.ValueString()
+	secret := plan.CertificateValue.ValueString()
 
 	encryptedSecret, err := client.EncryptLocalSecret(keyRes.Payload.SecretMetaResponseDek.Public, secret)
 	if err != nil {
 		resp.Diagnostics.AddError("unable to encrypt local secret", "encryption failed with:"+err.Error())
 	}
 
-	payload.SecretEnvironment = openapiclient.NewSecretEnvironment(encryptedSecret)
+	payload.SecretCertificate = openapiclient.NewSecretCertificate(plan.Certificate.ValueString(), encryptedSecret)
 
 	encryptionRef := fmt.Sprintf(`keys/dek/%d`, keyRes.Revision)
 
@@ -159,9 +166,9 @@ func (r *environmentSecretResource) Create(ctx context.Context, req resource.Cre
 }
 
 // Read refreshes the Terraform state with the latest data.
-func (r *environmentSecretResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *certificateSecretResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	// Get current state
-	var state environmentSecretResourceModel
+	var state certificatetsecretResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -181,6 +188,12 @@ func (r *environmentSecretResource) Read(ctx context.Context, req resource.ReadR
 
 	state.Name = types.StringValue(secret.Name)
 
+	planPayload := payloadObj{}
+
+	planPayload.Certificate = &secret.Payload.SecretMetaResponseCertificatePayload.Certificate
+
+	state.Revision = types.Int64Value(int64(secret.Revision))
+
 	date := resourceDate{
 		CreatedAt: secret.Date.CreatedAt,
 		UpdatedAt: secret.Date.UpdatedAt,
@@ -197,10 +210,10 @@ func (r *environmentSecretResource) Read(ctx context.Context, req resource.ReadR
 }
 
 // Update updates the resource and sets the updated Terraform state on success.
-func (r *environmentSecretResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *certificateSecretResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 
 	// Retrieve values from plan
-	var plan environmentSecretResourceModel
+	var plan certificatetsecretResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -211,7 +224,7 @@ func (r *environmentSecretResource) Update(ctx context.Context, req resource.Upd
 	secretType := openapiclient.SecretCreateType(openapiclient.SECRETCREATETYPE_ENVIRONMENT)
 	payload := openapiclient.SecretCreatePayload{}
 
-	secret := plan.Value.ValueString()
+	secret := plan.CertificateValue.ValueString()
 
 	// Fetch dek key
 	keyRes, err := r.client.FetchDek(ctx, plan.ProjectID.ValueString())
@@ -229,7 +242,7 @@ func (r *environmentSecretResource) Update(ctx context.Context, req resource.Upd
 		resp.Diagnostics.AddError("unable to encrypt local secret", "encryption failed with:"+err.Error())
 	}
 
-	payload.SecretEnvironment = openapiclient.NewSecretEnvironment(encryptedSecret)
+	payload.SecretCertificate = openapiclient.NewSecretCertificate(plan.Certificate.ValueString(), encryptedSecret)
 
 	encryption := fmt.Sprintf(`keys/dek/%d`, keyRes.Revision)
 
@@ -277,9 +290,9 @@ func (r *environmentSecretResource) Update(ctx context.Context, req resource.Upd
 }
 
 // Delete deletes the resource and removes the Terraform state on success.
-func (r *environmentSecretResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *certificateSecretResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	// Retrieve values from state
-	var state environmentSecretResourceModel
+	var state certificatetsecretResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -290,7 +303,6 @@ func (r *environmentSecretResource) Delete(ctx context.Context, req resource.Del
 	_, httpRes, err := r.client.SecretsAPI.ProjectsSecretsDelete(ctx, state.ProjectID.ValueString(), state.Name.ValueString()).Execute()
 	if err != nil {
 		resData, _ := qernalclient.ParseResponseData(httpRes)
-
 		ctx = tflog.SetField(ctx, "raw http response", resData)
 		tflog.Error(ctx, " deletion failed")
 		resp.Diagnostics.AddError(
@@ -302,10 +314,11 @@ func (r *environmentSecretResource) Delete(ctx context.Context, req resource.Del
 }
 
 // secretResourceModel maps the resource schema data.
-type environmentSecretResourceModel struct {
-	ProjectID types.String          `tfsdk:"project_id"`
-	Name      types.String          `tfsdk:"name"`
-	Value     types.String          `tfsdk:"value"`
-	Revision  types.Int64           `tfsdk:"revision"`
-	Date      basetypes.ObjectValue `tfsdk:"date"`
+type certificatetsecretResourceModel struct {
+	ProjectID        types.String          `tfsdk:"project_id"`
+	Name             types.String          `tfsdk:"name"`
+	Certificate      types.String          `tfsdk:"certificate"`
+	CertificateValue types.String          `tfsdk:"certificate_value"`
+	Revision         types.Int64           `tfsdk:"revision"`
+	Date             basetypes.ObjectValue `tfsdk:"date"`
 }
