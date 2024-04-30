@@ -14,10 +14,99 @@ description: |-
 
 ```terraform
 # Configuration-based authentication
+
+
+terraform {
+  required_providers {
+    qernal = {
+      source = "qernal/qernal"
+    }
+  }
+}
+
+
 provider "qernal" {
-  host_chaos = "https://hydra.qernal-bld.dev"
-  host_hydra = "https://chaos.qernal-bld.dev"
-  token      = "client_id@client_secret"
+  host_chaos = "https://chaos.qernal-bld.dev"
+  host_hydra = "https://hydra.qernal-bld.dev"
+  token      = "a043423a-71ef-422a-814e-19afed304b80@jrcXrCFBzU39tJHhDDqMf7W5AI"
+}
+
+# # Manage example qernal_organis ation.
+# resource "qernal_organisation" "example" {
+#   name = "goph"
+# }
+
+# resource "qernal_project" "example" {
+#   name   = "gohper-projects"
+#   org_id = qernal_organisation.example.id 
+# }
+
+variable "cert" {
+  default = <<EOF
+-----BEGIN RSA PRIVATE KEY-----
+MIIEogIBAAKCAQEA7FuK0RNN5UnZy8iQ6brHawaR1iRjtg5gN68TjsL20Efwr0lg
+TktmBKsZZ+3lJcqR6IiL3c87FT+OUYn0nuvXwtomiFTrvrHccDhCi6QAdlISkM2n
+mQ6Pz2NFelIycYj8uR9WOl32uFtqz8jHSIndmaqqUoijx8PAq5IH4wtQEAcKKQGo
+9qDH1BI0XoKttPbNTb4hf7bsmo3SGOEekIe8xFIDX6XEbWKWYwYBQ1SokM0b8gUo
+4PuJ1atEJ5FQaPOgwVa2M81+RmTVvBmXkTj/EXJ/VI2kpRXydAt/Q7J8Fl5YPPPA
+TnuPgHrFwsyxsJIIafXiPaj78hgZsyANXNghgwIDAQABAoIBAAKTdmVbSeTik6ti
+TitbTdb9nGUu7SBkyAzm3xZO9gDoWnuU0KYrlPsCJ/Bz30EYPpr461hwl2A0E6CD
+Uq5fLVTF1cnJmO6cMKYIPSngkMSAebb9+XtCZzQSDNsUt0LOhMvzDjUIiM5Z6Skq
+QTP/W1WpsiEyCmIKtk2zEeooZ8uXkcwWxK18MQ84mB62wYQrNM9KxjTWWkWsTVjO
+CTOdboJIksXdvVDGFw3+hGuzNsKL6TtdhL2XONz1DGKK+8H30GvLqLofwdwcEHic
+jzN3+HpUIi2YHSQiD2orIAWYoHN5jo38VeI0s9SJyp0FC4qWVLRpC3hs+IxJpdWm
+p1PmXy0CgYEA/Cjc+gpSTK5a6RcNEMGA7ErUODL2mVByWgLNbvqo4iAjIXQugI4j
+cl6xz2kqtQaO13NfJfiPxl5jHVKjZXZKuDUQT5Li2n6nqiWLmrEyECH+/+KzYgnH
+Mpy/eAwSipczAshh5rLQ1HO3P+dllDLZA0AD8cKpyGLxsi/PCF/BigcCgYEA7/UR
+rAZWcxMfm1TslJhn45SdWlD9u4QfSPAMZWGsytqrvwRZwEsPfp+DDoLnbAeaeglr
+nQCbTvXPbRYG4N7ITvjsHWSND/JL9x5Rrw00QDSpsa3XISB7ac1Ebvm/L+wU1+Yu
+8ANvEDlST/wj1TSTEGgtmL3ma9XicWa/eat1vaUCgYB+zhnaD+i1MRT8lJ/4Zibs
+LPEt1csW7FKlGzWt8pWNKXYhM6jS8ye2MxKd6BgW8tZQWG9ny+iZbAvRyiXrNyJ6
+Ig0yxv4XvIuaT8k1oJg5bq8qhRmKWrp2pEbRGtkUItb/Nj+tYQ0NWae0liwJ68wg
+C0gwgqEY6VD8N3iYkHbmbwKBgBm6ijmKuGxASaxLD87jBIinX7PWaU5Y3U3hx0J7
+lZ5ukem6WrE+mxu1mMTOjmfL7OlW5z3/Wae+vY3xxa0I1it5jz+bj3B9R13o11NQ
+tCCKRQOzIxT/OZxfkQ3hI3nM83Mu0CuWAquXqda/r0vmBjrFINZ2ziUT2uLT5IX0
+N3ytAoGAT5qPA+1iodD/edjyz8GHmuM5LUKQGwfqrhkMbraPfkk5GmNJyfbD/C4j
+40874tR2XGis2thUL4tsx+Bzr3JlBWWAzUOtzxgMP1d6i+YGi94g50MU2rV7y1Tb
+Txcjs/uooGTRi8YePZRNg1yqOE4C6nfKlqpq87Wqs3tTxIMmo4o=
+-----END RSA PRIVATE KEY-----
+EOF
+}
+
+variable "cert_pub" {
+  default = <<EOF
+-----BEGIN CERTIFICATE-----
+MIIDhTCCAm2gAwIBAgIEAya78zANBgkqhkiG9w0BAQsFADBbMScwJQYDVQQDDB5SZWdlcnkgU2Vs
+Zi1TaWduZWQgQ2VydGlmaWNhdGUxIzAhBgNVBAoMGlJlZ2VyeSwgaHR0cHM6Ly9yZWdlcnkuY29t
+MQswCQYDVQQGEwJVQTAgFw0yNDA0MjkwMDAwMDBaGA8yMTI0MDQyOTE3MzEwOVowRzETMBEGA1UE
+AwwKanVicmlsLnh5ejEjMCEGA1UECgwaUmVnZXJ5LCBodHRwczovL3JlZ2VyeS5jb20xCzAJBgNV
+BAYTAlVBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA7FuK0RNN5UnZy8iQ6brHawaR
+1iRjtg5gN68TjsL20Efwr0lgTktmBKsZZ+3lJcqR6IiL3c87FT+OUYn0nuvXwtomiFTrvrHccDhC
+i6QAdlISkM2nmQ6Pz2NFelIycYj8uR9WOl32uFtqz8jHSIndmaqqUoijx8PAq5IH4wtQEAcKKQGo
+9qDH1BI0XoKttPbNTb4hf7bsmo3SGOEekIe8xFIDX6XEbWKWYwYBQ1SokM0b8gUo4PuJ1atEJ5FQ
+aPOgwVa2M81+RmTVvBmXkTj/EXJ/VI2kpRXydAt/Q7J8Fl5YPPPATnuPgHrFwsyxsJIIafXiPaj7
+8hgZsyANXNghgwIDAQABo2MwYTAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBhjAdBgNV
+HQ4EFgQUaAsp6Ic9g6Zitf85NJ+FajnaMxAwHwYDVR0jBBgwFoAUaAsp6Ic9g6Zitf85NJ+Fajna
+MxAwDQYJKoZIhvcNAQELBQADggEBAGCrLCY/qmyhOpkhSDwf8lyeXMiGMAVO9/EGbRq80iEzuIyi
+DJsocv5zCHumit6SLDbUvK1eED7jUta8oC9bw/ReuKiZ8qz20o/aojPWr0ppz3KsVNYZD3ugIxCJ
+YS7JE8CTR3i9Dbc70hzS3MV67CFeTkFBUPe1fZaIHpQIM8VP1MT3LS4hQwELhPBNW6oSIY7O0IFw
+gFob554kUnVqZx6SlQ2Nu8tVKHg0AidzjaUcoYqQd+y518/dmilXw6cpfjrEcLRIpgWbNzt70kNv
+889jCIRB5lPsYku4IS7xyWsUZT5G+Wa3iw79LlxxmU+WOz8VTcnM4SD5rEEgwSBgvrA=
+-----END CERTIFICATE-----
+EOF
+}
+
+resource "qernal_certificate_secret" "name" {
+  project_id        = "9889d2c6-7588-4122-b75c-814dfdabe974"
+  name              = "SUPERCERT"
+  certificate       = var.cert_pub
+  certificate_value = var.cert
+
+}
+
+output "registry_stuff" {
+  value     = qernal_certificate_secret.name
+  sensitive = true
 }
 ```
 
