@@ -1,0 +1,6 @@
+# THIS FILE IS MANAGED BY IAC
+# AND WILL BE OVERWRITTEN IF MODIFIED
+# github-infra:/assets/codeowners_consumer_tooling
+
+# always reviewer by consumer tooling team
+* @qernal/consumer-tooling
