@@ -2,5 +2,8 @@
 # AND WILL BE OVERWRITTEN IF MODIFIED
 # github-infra:/assets/codeowners_consumer_tooling
 
-# always reviewer by consumer tooling team
+# review CI by devops team
+.github/** @qernal/devops
+
+# always review by consumer tooling team
 * @qernal/consumer-tooling
