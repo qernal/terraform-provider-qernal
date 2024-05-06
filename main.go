@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"log"
 	"terraform-provider-qernal/internal/provider"
+
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )
 
 var version string = "dev"
@@ -32,7 +33,7 @@ func main() {
 		// provider address is used in these tutorials in conjunction with a
 		// specific Terraform CLI configuration for manual development testing
 		// of this provider.
-		Address: "registry.terraform.io/hashicorp/qernal",
+		Address: "registry.terraform.io/qernal/qernal",
 		Debug:   debug,
 	}
 
