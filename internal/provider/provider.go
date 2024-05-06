@@ -149,7 +149,9 @@ func (p *qernalProvider) Configure(ctx context.Context, req provider.ConfigureRe
 }
 
 func (p *qernalProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return nil
+	return []func() datasource.DataSource{
+		qernalresource.NewenvironmentDataSource,
+	}
 }
 
 func (p *qernalProvider) Resources(_ context.Context) []func() resource.Resource {
