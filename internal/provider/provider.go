@@ -150,7 +150,9 @@ func (p *qernalProvider) Configure(ctx context.Context, req provider.ConfigureRe
 
 func (p *qernalProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		qernalresource.NewcertificateDataSource,
 		qernalresource.NewenvironmentDataSource,
+		qernalresource.NewregistryDataSource,
 	}
 }
 
