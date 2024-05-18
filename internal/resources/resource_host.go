@@ -1,20 +1,18 @@
 package resources
 
 import (
+	"context"
 	"fmt"
+	qernalclient "terraform-provider-qernal/internal/client"
+	pkgtypes "terraform-provider-qernal/pkg/types"
+
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
-	qernalclient "terraform-provider-qernal/internal/client"
-	pkgtypes "terraform-provider-qernal/pkg/types"
-)
-
-import (
-	"context"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -77,6 +75,7 @@ func (r *hostResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+				Description: "hostname",
 			},
 			"certificate": schema.StringAttribute{
 				Required: true,
@@ -97,8 +96,13 @@ func (r *hostResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				Computed: true,
 			},
 			"verification_status": schema.StringAttribute{
-				Required: false,
-				Computed: true,
+				Required:    false,
+				Computed:    true,
+				Description: "One of: pending,failed,completed",
+			},
+			"reverify": schema.BoolAttribute{
+				Optional:    true,
+				Description: "when set to true, reverification will be scheduled when verifcation status is failed",
 			},
 			"date": schema.SingleNestedAttribute{
 				Computed: true,
@@ -140,6 +144,17 @@ func (r *hostResource) Create(ctx context.Context, req resource.CreateRequest, r
 			"Error creating Host",
 			"Could not create Host, unexpected error: "+err.Error()+" with"+fmt.Sprintf(", detail: %v", resData))
 		return
+	}
+
+	if host.VerificationStatus == "failed" {
+		_, httpRes, err := r.client.HostsAPI.ProjectsHostsVerifyCreate(ctx, plan.ProjectID.ValueString(), plan.Name.ValueString()).Execute()
+		if err != nil {
+			resData, _ := qernalclient.ParseResponseData(httpRes)
+			resp.Diagnostics.AddError(
+				"Error scheduling reverification",
+				"Could schedule Host, unexpected error: "+err.Error()+" with"+fmt.Sprintf(", detail: %v", resData))
+			return
+		}
 	}
 
 	plan.ID = types.StringValue(host.Id)
@@ -303,4 +318,5 @@ type hostResourceModel struct {
 	VerifiedAt         types.String          `tfsdk:"verified_at"`
 	VerificationStatus types.String          `tfsdk:"verification_status"`
 	Date               basetypes.ObjectValue `tfsdk:"date"`
+	Reverify           types.Bool            `tfsdk:"reverify"`
 }
