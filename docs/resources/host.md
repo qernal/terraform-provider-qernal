@@ -29,8 +29,12 @@ resource "qernal_host" "host_example" {
 
 - `certificate` (String)
 - `disabled` (Boolean)
-- `name` (String)
+- `name` (String) hostname
 - `project_id` (String)
+
+### Optional
+
+- `reverify` (Boolean) when set to true, reverification will be scheduled when verifcation status is failed
 
 ### Read-Only
 
@@ -38,7 +42,7 @@ resource "qernal_host" "host_example" {
 - `id` (String) The ID of this resource.
 - `read_only` (Boolean)
 - `txt_verification` (String)
-- `verification_status` (String)
+- `verification_status` (String) One of: pending,failed,completed
 - `verified_at` (String)
 
 <a id="nestedatt--date"></a>
