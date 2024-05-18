@@ -146,13 +146,13 @@ func (r *hostResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	if host.VerificationStatus == "failed" {
-		_, httpRes, err := r.client.HostsAPI.ProjectsHostsVerifyCreate(ctx, plan.ProjectID.ValueString(), plan.Name.ValueString()).Execute()
+	// check if host reverification is enabled
+	if plan.Reverify.ValueBool() {
+		err := r.reverify(ctx, &plan)
 		if err != nil {
-			resData, _ := qernalclient.ParseResponseData(httpRes)
 			resp.Diagnostics.AddError(
 				"Error scheduling reverification",
-				"Could schedule Host, unexpected error: "+err.Error()+" with"+fmt.Sprintf(", detail: %v", resData))
+				"Could schedule Host, unexpected error: "+err.Error())
 			return
 		}
 	}
@@ -200,6 +200,16 @@ func (r *hostResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 			"Could not read Host Name "+state.Name.ValueString()+": "+err.Error(),
 		)
 		return
+	}
+	// check if host reverification is enabled
+	if state.Reverify.ValueBool() {
+		err := r.reverify(ctx, &state)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error scheduling reverification",
+				"Could schedule Host, unexpected error: "+err.Error())
+			return
+		}
 	}
 
 	state.Name = types.StringValue(host.Host)
@@ -261,6 +271,17 @@ func (r *hostResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
+	// check if host reverification is enabled
+	if plan.Reverify.ValueBool() {
+		err := r.reverify(ctx, &plan)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error scheduling reverification",
+				"Could schedule Host, unexpected error: "+err.Error())
+			return
+		}
+	}
+
 	// Update resource state with updated items and timestamp
 
 	plan.Name = types.StringValue(host.Host)
@@ -304,6 +325,19 @@ func (r *hostResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		)
 		return
 	}
+}
+
+func (r *hostResource) reverify(ctx context.Context, plan *hostResourceModel) error {
+	if plan.VerificationStatus.ValueString() == "failed" {
+		_, httpRes, err := r.client.HostsAPI.ProjectsHostsVerifyCreate(ctx, plan.ProjectID.ValueString(), plan.Name.ValueString()).Execute()
+		if err != nil {
+			resData, _ := qernalclient.ParseResponseData(httpRes)
+			// Wrap the original error with additional context
+			return fmt.Errorf("error scheduling reverification: Could not schedule Host, unexpected error: %w with detail: %v", err, resData)
+		}
+	}
+	// No error, return nil
+	return nil
 }
 
 // hostResourceModel maps the resource schema data.
