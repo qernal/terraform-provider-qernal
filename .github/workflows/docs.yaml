@@ -1,0 +1,50 @@
+name: docs
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  generate:
+    name: Generate docs
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install tfplugindocs
+        run: |
+          export GOBIN=$PWD/bin
+          export PATH=$GOBIN:$PATH
+          go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+          which tfplugindocs
+
+      - name: Generate docs
+        run: |
+          export GOBIN=$PWD/bin
+          export PATH=$GOBIN:$PATH
+
+          tfplugindocs generate --rendered-provider-name Qernal
+
+          echo "Generated files:"
+          git status --porcelain
+
+      - name: Commit changes
+        run: |
+          # commit client (if changes have been made)
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Committing changes..."
+
+            git config user.name "${{ github.actor }}"
+            git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+
+            git add docs/
+            git commit -m "docs: updated tf provider docs"
+            echo "${{ github.GITHUB_HEAD_REF }}"
+            # git push origin ${{ github.GITHUB_HEAD_REF }}
+          fi
