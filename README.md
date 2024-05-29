@@ -1,15 +1,17 @@
-## Terraform Provider for Qernal cloud
+# Terraform Provider for Qernal
 
-## This system includes 3 main component: 
+The Terraform provider for Qernal allows you to manage resources via
+terraform. This provider is maintained by Qernal.
 
-1. Qernal terraform provider: This is the custom terraform provider for Qernal cloud, also act a OAuth client and will interact with the internal Qernal API 
-2. Ory Hydra: OAuth server that will handle OAuth flows from OAuth client(Terraform provider)
-3. Qernal API Server: The internal API server for Qernal cloud. Our terraform provider will interact with this server.
+## Quick Start
 
+<!-- TODO insert quick start docs -->
 
+## Provider Usage
 
+<!-- TODO insert provider usage docs -->
 
-### Developing Locally 
+## Developing the provider
 
 
 To test the provider locally, Terraform provides an easy way to specify dev ovverides. Begin retrieving your GOBIN using the `go env` command:
@@ -19,9 +21,9 @@ go env GOBIN
 ```
 
 
-Next edit or create file in the following path `~/.terraformrc` 
+Next edit or create file in the following path `~/.terraformrc`
 
-```terraform 
+```terraform
 provider_installation {
 
   dev_overrides {
@@ -34,6 +36,6 @@ provider_installation {
   direct {}
 }
 ```
-Be sure to replace <PATH> with the output returned from `go env GOBIN` 
+Be sure to replace <PATH> with the output returned from `go env GOBIN`
 
 
