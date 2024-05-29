@@ -45,6 +45,6 @@ jobs:
 
             git add docs/
             git commit -m "docs: updated tf provider docs"
-            echo "${{ github.GITHUB_HEAD_REF }}"
+            echo "${{ github.event.pull_request.head.ref }}"
             # git push origin ${{ github.GITHUB_HEAD_REF }}
           fi
