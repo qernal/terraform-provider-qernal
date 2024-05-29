@@ -38,4 +38,10 @@ provider_installation {
 ```
 Be sure to replace <PATH> with the output returned from `go env GOBIN`
 
+### Generating docs
 
+To generate the docs locally;
+
+```bash
+tfplugindocs generate --rendered-provider-name Qernal
+```
