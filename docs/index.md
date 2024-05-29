@@ -3,21 +3,19 @@
 page_title: "qernal Provider"
 subcategory: ""
 description: |-
-  
+  Provider used to managed resources within Qernal
 ---
 
 # qernal Provider
 
-
+Provider used to managed resources within Qernal
 
 ## Example Usage
 
 ```terraform
 # Configuration-based authentication
 provider "qernal" {
-  host_chaos = "https://hydra.qernal-bld.dev"
-  host_hydra = "https://chaos.qernal-bld.dev"
-  token      = "client_id@client_secret"
+  token = "qernal_token"
 }
 ```
 
@@ -26,9 +24,9 @@ provider "qernal" {
 
 ### Required
 
-- `token` (String) The token use to authenticate with the qernal platform, with format: client_id@clien_secret
+- `token` (String, Sensitive) The token to authenticate with Qernal
 
 ### Optional
 
-- `host_chaos` (String) The endpoint of Qernal Cloud API
-- `host_hydra` (String) The endpoint of OAuth 2 server
+- `host_chaos` (String) The endpoint of Qernal Chaos (for dev use only)
+- `host_hydra` (String) The endpoint of Qernal Hydra (for dev use only)
