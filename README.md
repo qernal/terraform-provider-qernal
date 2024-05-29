@@ -43,5 +43,5 @@ Be sure to replace <PATH> with the output returned from `go env GOBIN`
 To generate the docs locally;
 
 ```bash
-tfplugindocs generate --rendered-provider-name Qernal
+go generate ./
 ```
