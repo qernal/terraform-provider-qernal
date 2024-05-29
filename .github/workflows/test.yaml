@@ -34,7 +34,9 @@ jobs:
         with:
           version: latest
 
-  generate:
+  # ensure docs are up to date
+  docs:
+    name: Validate docs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
