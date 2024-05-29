@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -46,18 +45,20 @@ func (p *qernalProvider) Metadata(_ context.Context, _ provider.MetadataRequest,
 
 func (p *qernalProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Provider used to managed resources within Qernal",
 		Attributes: map[string]schema.Attribute{
 			"host_chaos": schema.StringAttribute{
 				Optional:    true,
-				Description: "The endpoint of Qernal Cloud API",
+				Description: "The endpoint of Qernal Chaos (for dev use only)",
 			},
 			"host_hydra": schema.StringAttribute{
 				Optional:    true,
-				Description: "The endpoint of OAuth 2 server",
+				Description: "The endpoint of Qernal Hydra (for dev use only)",
 			},
 			"token": schema.StringAttribute{
 				Required:    true,
-				Description: "The token use to authenticate with the qernal platform, with format: client_id@clien_secret",
+				Description: "The token to authenticate with Qernal",
+				Sensitive:   true,
 			},
 		},
 	}
@@ -65,9 +66,6 @@ func (p *qernalProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 
 func (p *qernalProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	// Retrieve provider data from configuration
-	ctx = tflog.SetField(ctx, "some", "stuff")
-
-	tflog.Info(ctx, "here's the rest")
 	var config qernalProviderModel
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
