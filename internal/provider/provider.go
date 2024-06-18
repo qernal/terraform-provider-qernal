@@ -165,5 +165,6 @@ func (p *qernalProvider) Resources(_ context.Context) []func() resource.Resource
 		qernalresource.NewcertificateSecretResource,
 		qernalresource.NewTokenResource,
 		qernalresource.NewHostResource,
+		qernalresource.NewFunctionResource,
 	}
 }
