@@ -1,0 +1,21 @@
+# THIS FILE IS MANAGED BY IAC
+# AND WILL BE OVERWRITTEN IF MODIFIED
+# github-infra:/assets/workflows/conventional_commits.yaml
+
+name: qernal-conventional-commits
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  # validate commits
+  commit:
+    if: '! github.event.pull_request.draft'
+    uses: qernal/qernal-pipelines/.github/workflows/conventional-commits.yaml@develop
+    with:
+      lint_only: true
