@@ -17,7 +17,7 @@ description: |-
 
 ### Required
 
-- `compliance` (List of String) Compliance standards the function adheres to.
+- `compliance` (List of String) Compliance standards the function adheres to, one of soc or ipv6
 - `deployments` (Attributes List) List of deployments for the function, specifying locations and replicas. (see [below for nested schema](#nestedatt--deployments))
 - `image` (String) Container image for the function.
 - `name` (String) Name of the function.
@@ -25,7 +25,6 @@ description: |-
 - `project_id` (String) ID of the project where the function will be deployed.
 - `routes` (Attributes List) List of routes that define the function's endpoints. (see [below for nested schema](#nestedatt--routes))
 - `scaling` (Attributes) Scaling configuration for the function. (see [below for nested schema](#nestedatt--scaling))
-- `secrets` (Attributes List) List of secrets used by the function. (see [below for nested schema](#nestedatt--secrets))
 - `size` (Attributes) Size configuration for the function, specifying CPU and memory resources. (see [below for nested schema](#nestedatt--size))
 - `type` (String) Type of the function (e.g., HTTP, Event-driven).
 - `version` (String) Version of the function.
@@ -33,6 +32,7 @@ description: |-
 ### Optional
 
 - `description` (String) A brief description of the function.
+- `secrets` (Attributes List) List of secrets used by the function. (see [below for nested schema](#nestedatt--secrets))
 
 ### Read-Only
 
@@ -97,15 +97,6 @@ Required:
 - `type` (String) Type of scaling (e.g., automatic, manual).
 
 
-<a id="nestedatt--secrets"></a>
-### Nested Schema for `secrets`
-
-Required:
-
-- `name` (String) Name of the secret.
-- `reference` (String) Reference to the secret's value.
-
-
 <a id="nestedatt--size"></a>
 ### Nested Schema for `size`
 
@@ -113,3 +104,12 @@ Required:
 
 - `cpu` (Number) Amount of CPU allocated to the function.
 - `memory` (Number) Amount of memory allocated to the function.
+
+
+<a id="nestedatt--secrets"></a>
+### Nested Schema for `secrets`
+
+Required:
+
+- `name` (String) Name of the secret.
+- `reference` (String) Reference to the secret's value.
