@@ -2,4 +2,3 @@
 provider "qernal" {
   token = "qernal_token"
 }
-
