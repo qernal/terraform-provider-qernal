@@ -146,6 +146,8 @@ github.com/qernal/openapi-chaos-go-client v0.0.0-20240326140038-03622154b1c9 h1:
 github.com/qernal/openapi-chaos-go-client v0.0.0-20240326140038-03622154b1c9/go.mod h1:V03TW7A8DLMBBZz1RGvIWog7Hfla2uPbNBIcMhg8bX8=
 github.com/qernal/openapi-chaos-go-client v0.0.0-20240609175008-2315b0d254f9 h1:Yuh+dzMQZd+QAgwJqJf/f7D+fLW2o/Yz+Dyxc/sDH28=
 github.com/qernal/openapi-chaos-go-client v0.0.0-20240609175008-2315b0d254f9/go.mod h1:V03TW7A8DLMBBZz1RGvIWog7Hfla2uPbNBIcMhg8bX8=
+github.com/qernal/openapi-chaos-go-client v0.0.0-20240627213605-a4db7b4e2119 h1:RUT0N3p43JnIJTh5Yp2bFYD/RcwyFmtbXMcGwDPYP+Q=
+github.com/qernal/openapi-chaos-go-client v0.0.0-20240627213605-a4db7b4e2119/go.mod h1:V03TW7A8DLMBBZz1RGvIWog7Hfla2uPbNBIcMhg8bX8=
 github.com/rogpeppe/go-internal v1.9.0 h1:73kH8U+JUqXU8lRuOHeVHaa/SZPifC7BkcraZVejAe8=
 github.com/rogpeppe/go-internal v1.9.0/go.mod h1:WtVeX8xhTBvf0smdhujwtBcq4Qrzq/fJaraNFVN+nFs=
 github.com/russross/blackfriday v1.6.0 h1:KqfZb0pUVN2lYqZUYRddxF4OR8ZMURnJIG5Y3VRLtww=
