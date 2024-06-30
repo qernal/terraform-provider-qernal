@@ -140,7 +140,7 @@ func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Attributes: map[string]schema.Attribute{
 					"type": schema.StringAttribute{
 						Required:    true,
-						Description: "Type of scaling (e.g., automatic, manual).",
+						Description: "Type of scaling (can be either CPU or Memory).",
 					},
 					"low": schema.Int64Attribute{
 						Required:    true,

@@ -94,7 +94,7 @@ Required:
 
 - `high` (Number) Upper bound for scaling.
 - `low` (Number) Lower bound for scaling.
-- `type` (String) Type of scaling (e.g., automatic, manual).
+- `type` (String) Type of scaling (can be either CPU or Memory).
 
 
 <a id="nestedatt--size"></a>
