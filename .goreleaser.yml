@@ -46,7 +46,6 @@ signs:
       # need to pass the batch flag to indicate its not interactive.
       - "--batch"
       - "--local-user"
-      - "-u"
       - "{{ .Env.GPG_FINGERPRINT }}"
       - "--output"
       - "${signature}"
