@@ -56,7 +56,7 @@ func (p *qernalProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 				Description: "The endpoint of Qernal Hydra (for dev use only)",
 			},
 			"token": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The token to authenticate with Qernal",
 				Sensitive:   true,
 			},
