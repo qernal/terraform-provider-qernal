@@ -17,8 +17,8 @@ description: |-
 
 ### Required
 
-- `certificate` (String, Sensitive) raw value of the certificate public key
-- `certificate_value` (String, Sensitive) raw value of the certificate private key
+- `certificate` (String, Sensitive) plain text value of the certificate public key
+- `certificate_value` (String, Sensitive) plain text value of the certificate private key
 - `name` (String) Name of the certificate
 - `project_id` (String)
 
