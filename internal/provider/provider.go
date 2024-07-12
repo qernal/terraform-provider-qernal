@@ -17,9 +17,7 @@ import (
 
 // qernalProviderModel maps provider schema data to a Go type.
 type qernalProviderModel struct {
-	Token     types.String `tfsdk:"token"`
-	HostChaos types.String `tfsdk:"host_chaos"`
-	HostHydra types.String `tfsdk:"host_hydra"`
+	Token types.String `tfsdk:"token"`
 }
 
 var (
@@ -47,14 +45,6 @@ func (p *qernalProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 	resp.Schema = schema.Schema{
 		Description: "Provider used to managed resources within Qernal",
 		Attributes: map[string]schema.Attribute{
-			"host_chaos": schema.StringAttribute{
-				Optional:    true,
-				Description: "The endpoint of Qernal Chaos (for dev use only)",
-			},
-			"host_hydra": schema.StringAttribute{
-				Optional:    true,
-				Description: "The endpoint of Qernal Hydra (for dev use only)",
-			},
 			"token": schema.StringAttribute{
 				Optional:    true,
 				Description: "The token to authenticate with Qernal",
@@ -87,7 +77,6 @@ func (p *qernalProvider) Configure(ctx context.Context, req provider.ConfigureRe
 
 	// Default values to environment variables, but override
 	// with Terraform configuration value if set.
-
 	hostChaos := os.Getenv("QERNAL_HOST_CHAOS")
 	if hostChaos == "" {
 		hostChaos = "https://chaos.qernal.com"
@@ -98,14 +87,6 @@ func (p *qernalProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		hostHydra = "https://hydra.qernal.com"
 	}
 	token := os.Getenv("QERNAL_TOKEN")
-
-	if !config.HostChaos.IsNull() {
-		hostChaos = config.HostChaos.ValueString()
-	}
-
-	if !config.HostHydra.IsNull() {
-		hostHydra = config.HostHydra.ValueString()
-	}
 
 	if !config.Token.IsNull() {
 		token = config.Token.ValueString()
@@ -160,7 +141,6 @@ func (p *qernalProvider) Resources(_ context.Context) []func() resource.Resource
 	return []func() resource.Resource{
 		qernalresource.NewOrganisationResource,
 		qernalresource.NewProjectResource,
-		qernalresource.NewSecretResource,
 		qernalresource.NewregistrySecretResource,
 		qernalresource.NewenvironmentsecretResource,
 		qernalresource.NewcertificateSecretResource,
