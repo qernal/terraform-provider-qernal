@@ -69,13 +69,13 @@ func (r *certificateSecretResource) Schema(_ context.Context, _ resource.SchemaR
 
 			"certificate": schema.StringAttribute{
 				Required:    true,
-				Description: "base64 encoded certificate public key",
+				Description: "raw value of the certificate public key",
 				Sensitive:   true,
 			},
 
 			"certificate_value": schema.StringAttribute{
 				Required:    true,
-				Description: "base64 encoded certificate private key",
+				Description: "raw value of the certificate private key",
 				Sensitive:   true,
 			},
 
@@ -221,7 +221,7 @@ func (r *certificateSecretResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	// Update existing secret
-	secretType := openapiclient.SecretCreateType(openapiclient.SECRETCREATETYPE_ENVIRONMENT)
+	secretType := openapiclient.SecretCreateType(openapiclient.SECRETMETATYPE_CERTIFICATE)
 	payload := openapiclient.SecretCreatePayload{}
 
 	secret := plan.CertificateValue.ValueString()
