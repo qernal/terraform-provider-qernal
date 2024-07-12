@@ -337,7 +337,12 @@ type registrySecretResourceModel struct {
 	Date        basetypes.ObjectValue `tfsdk:"date"`
 }
 
-// type payloadObj struct {
-// 	Registry      *string `tfsdk:"registry"`
-// 	RegistryValue *string `tfsdk:"registry_value"`
-// }
+type payloadObj struct {
+	EnvironmentValue *string `tfsdk:"environment_value"`
+
+	Certificate      *string `tfsdk:"certificate"`
+	CertificateValue *string `tfsdk:"certificate_value"`
+
+	Registry      *string `tfsdk:"registry"`
+	RegistryValue *string `tfsdk:"registry_value"`
+}
