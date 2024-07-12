@@ -48,7 +48,7 @@ func (r *environmentsecretResource) Configure(ctx context.Context, req resource.
 }
 
 func (r *environmentsecretResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_environment_secret"
+	resp.TypeName = req.ProviderTypeName + "_secret_environment"
 }
 
 // Schema defines the schema for the resource.

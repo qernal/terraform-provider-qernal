@@ -48,7 +48,7 @@ func (r *certificateSecretResource) Configure(ctx context.Context, req resource.
 }
 
 func (r *certificateSecretResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_certificate_secret"
+	resp.TypeName = req.ProviderTypeName + "_secret_certificate"
 }
 
 // Schema defines the schema for the resource.
