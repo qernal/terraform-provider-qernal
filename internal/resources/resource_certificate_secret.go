@@ -69,13 +69,13 @@ func (r *certificateSecretResource) Schema(_ context.Context, _ resource.SchemaR
 
 			"certificate": schema.StringAttribute{
 				Required:    true,
-				Description: "raw value of the certificate public key",
+				Description: "plain text value of the certificate public key",
 				Sensitive:   true,
 			},
 
 			"certificate_value": schema.StringAttribute{
 				Required:    true,
-				Description: "raw value of the certificate private key",
+				Description: "plain text value of the certificate private key",
 				Sensitive:   true,
 			},
 
