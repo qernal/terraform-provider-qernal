@@ -17,8 +17,8 @@ description: |-
 
 ### Required
 
-- `certificate` (String, Sensitive) base64 encoded certificate public key
-- `certificate_value` (String, Sensitive) base64 encoded certificate private key
+- `certificate` (String, Sensitive) raw value of the certificate public key
+- `certificate_value` (String, Sensitive) raw value of the certificate private key
 - `name` (String) Name of the certificate
 - `project_id` (String)
 
