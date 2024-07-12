@@ -1,21 +1,54 @@
 # THIS FILE IS MANAGED BY IAC
 # AND WILL BE OVERWRITTEN IF MODIFIED
-# github-infra:/assets/workflows/conventional_commits.yaml
+# github-infra:/assets/workflows/oss_conventional_commits.yaml
 
-name: qernal-conventional-commits
+name: qernal-oss-conventional-commits
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_call:
+    inputs:
+      lint_only:
+        description: |
+          'To lint commits only, or to also perform a release'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
-  # validate commits
-  commit:
-    if: '! github.event.pull_request.draft'
-    uses: qernal/qernal-pipelines/.github/workflows/conventional-commits.yaml@develop
-    with:
-      lint_only: true
+  cog_check_job:
+    runs-on: ubuntu-22.04
+    name: Check conventional commit compliance
+    steps:
+      - uses: actions/checkout@v3
+        if: github.event_name == 'pull_request'
+        with:
+          fetch-depth: 0
+          # pick the pr HEAD instead of the merge commit
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/checkout@v3
+        if: github.event_name != 'pull_request'
+        with:
+          fetch-depth: 0
+
+      - name: Conventional commit check
+        uses: cocogitto/cocogitto-action@v3
+        with:
+          check-latest-tag-only: true
+
+  release:
+    runs-on: ubuntu-22.04
+    name: Generate release
+    if: github.ref == 'refs/heads/main' && inputs.lint_only != true
+    steps:
+      - name: Semver release
+        uses: cocogitto/cocogitto-action@v3
+        id: release
+        with:
+          release: true
+          git-user: 'Qernal CI'
+          git-user-email: 'ci@qernal.com'
+
+      # The version number is accessible as a github action output
+      - name: Print version
+        run: "echo '${{ steps.release.outputs.version }}'"
