@@ -43,7 +43,7 @@ func (r *registryDataSource) Configure(ctx context.Context, req datasource.Confi
 
 // Metadata returns the data source type name.
 func (d *registryDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_registry_secret"
+	resp.TypeName = req.ProviderTypeName + "_secret_registry"
 }
 
 // Schema defines the schema for the data source.
