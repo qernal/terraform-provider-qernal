@@ -1,0 +1,5 @@
+# THIS FILE IS MANAGED BY IAC
+# AND WILL BE OVERWRITTEN IF MODIFIED
+# github-infra:/assets/cog.toml
+
+tag_prefix = "v"
