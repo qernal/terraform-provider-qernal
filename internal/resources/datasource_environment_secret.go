@@ -43,7 +43,7 @@ func (r *environmentDataSource) Configure(ctx context.Context, req datasource.Co
 
 // Metadata returns the data source type name.
 func (d *environmentDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_environment_secret"
+	resp.TypeName = req.ProviderTypeName + "_secret_environment"
 }
 
 // Schema defines the schema for the data source.

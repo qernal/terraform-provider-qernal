@@ -48,7 +48,7 @@ func (r *registrySecretResource) Configure(ctx context.Context, req resource.Con
 }
 
 func (r *registrySecretResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_registry_secret"
+	resp.TypeName = req.ProviderTypeName + "_secret_registry"
 }
 
 // Schema defines the schema for the resource.
