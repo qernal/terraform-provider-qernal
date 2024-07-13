@@ -253,7 +253,7 @@ func (r *FunctionResource) Create(ctx context.Context, req resource.CreateReques
 	functionCompliance := ComplianceToOpenAPI(plan.Compliance)
 
 	// Create new Function
-	function, httpRes, err := r.client.FunctionsAPI.ProjectsFunctionsCreate(ctx, plan.ProjectID.ValueString()).FunctionBody(openapiclient.FunctionBody{
+	function, httpRes, err := r.client.FunctionsAPI.FunctionsCreate(ctx).FunctionBody(openapiclient.FunctionBody{
 		ProjectId:   plan.ProjectID.ValueString(),
 		Version:     plan.Version.ValueString(),
 		Name:        plan.Name.ValueString(),
