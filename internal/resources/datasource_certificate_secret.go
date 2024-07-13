@@ -43,7 +43,7 @@ func (r *certificateDataSource) Configure(ctx context.Context, req datasource.Co
 
 // Metadata returns the data source type name.
 func (d *certificateDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_certificate_secret"
+	resp.TypeName = req.ProviderTypeName + "_secret_certificate"
 }
 
 // Schema defines the schema for the data source.
