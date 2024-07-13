@@ -5,7 +5,7 @@ go 1.21.3
 require (
 	github.com/hashicorp/terraform-plugin-docs v0.16.0
 	github.com/hashicorp/terraform-plugin-framework v1.4.2
-	github.com/qernal/openapi-chaos-go-client v0.0.0-20240627213605-a4db7b4e2119
+	github.com/qernal/openapi-chaos-go-client v0.0.0-20240711184722-5ce526a30870
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/oauth2 v0.13.0
 )
