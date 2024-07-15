@@ -81,6 +81,10 @@ func (r *registrySecretResource) Schema(_ context.Context, _ resource.SchemaRequ
 				Computed: true,
 				Required: false,
 			},
+			"reference": schema.StringAttribute{
+				Computed:    true,
+				Description: "reference attribute of the secret",
+			},
 			"date": schema.SingleNestedAttribute{
 				Computed: true,
 				Required: false,
@@ -155,6 +159,7 @@ func (r *registrySecretResource) Create(ctx context.Context, req resource.Create
 
 	plan.Name = types.StringValue(secret.Name)
 
+	plan.Reference = types.StringValue(fmt.Sprintf("projects:%s/%s", plan.ProjectID, plan.Name))
 	plan.Revision = types.Int64Value(int64(secret.Revision))
 
 	date := resourceDate{
@@ -327,10 +332,9 @@ func (r *registrySecretResource) Delete(ctx context.Context, req resource.Delete
 
 // secretResourceModel maps the resource schema data.
 type registrySecretResourceModel struct {
-	ProjectID types.String `tfsdk:"project_id"`
-	Name      types.String `tfsdk:"name"`
-	// Type        types.String          `tfsdk:"type"`
-	// Payload     payloadObj            `tfsdk:"payload"`
+	ProjectID   types.String          `tfsdk:"project_id"`
+	Name        types.String          `tfsdk:"name"`
+	Reference   types.String          `tfsdk:"reference"`
 	RegistryUrl types.String          `tfsdk:"registry_url"`
 	AuthToken   types.String          `tfsdk:"auth_token"`
 	Revision    types.Int64           `tfsdk:"revision"`

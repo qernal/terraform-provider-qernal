@@ -79,6 +79,11 @@ func (r *certificateSecretResource) Schema(_ context.Context, _ resource.SchemaR
 				Sensitive:   true,
 			},
 
+			"reference": schema.StringAttribute{
+				Computed:    true,
+				Description: "reference attribute of the secret",
+			},
+
 			"revision": schema.Int64Attribute{
 				Computed: true,
 				Required: false,
@@ -148,6 +153,7 @@ func (r *certificateSecretResource) Create(ctx context.Context, req resource.Cre
 
 	plan.Name = types.StringValue(secretRes.Name)
 
+	plan.Reference = types.StringValue(fmt.Sprintf("projects:%s/%s", plan.ProjectID, plan.Name))
 	plan.Revision = types.Int64Value(int64(secretRes.Revision))
 
 	date := resourceDate{
@@ -319,6 +325,7 @@ type certificatetsecretResourceModel struct {
 	Name             types.String          `tfsdk:"name"`
 	Certificate      types.String          `tfsdk:"certificate"`
 	CertificateValue types.String          `tfsdk:"certificate_value"`
+	Reference        types.String          `tfsdk:"reference"`
 	Revision         types.Int64           `tfsdk:"revision"`
 	Date             basetypes.ObjectValue `tfsdk:"date"`
 }
