@@ -24,6 +24,7 @@ description: |-
 ### Read-Only
 
 - `date` (Attributes) (see [below for nested schema](#nestedatt--date))
+- `reference` (String) reference attribute of the secret
 - `revision` (Number)
 
 <a id="nestedatt--date"></a>
