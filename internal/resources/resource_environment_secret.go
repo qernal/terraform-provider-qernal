@@ -72,6 +72,11 @@ func (r *environmentsecretResource) Schema(_ context.Context, _ resource.SchemaR
 				Description: "Value of the environment variable",
 			},
 
+			"reference": schema.StringAttribute{
+				Computed:    true,
+				Description: "reference attribute of the secret",
+			},
+
 			"revision": schema.Int64Attribute{
 				Computed: true,
 				Required: false,
@@ -140,6 +145,8 @@ func (r *environmentsecretResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	plan.Name = types.StringValue(secretRes.Name)
+
+	plan.Reference = types.StringValue(fmt.Sprintf("projects:%s/%s", plan.ProjectID, plan.Name))
 
 	plan.Revision = types.Int64Value(int64(secretRes.Revision))
 
@@ -306,6 +313,7 @@ type environmentsecretResourceModel struct {
 	ProjectID types.String          `tfsdk:"project_id"`
 	Name      types.String          `tfsdk:"name"`
 	Value     types.String          `tfsdk:"value"`
+	Reference types.String          `tfsdk:"reference"`
 	Revision  types.Int64           `tfsdk:"revision"`
 	Date      basetypes.ObjectValue `tfsdk:"date"`
 }
