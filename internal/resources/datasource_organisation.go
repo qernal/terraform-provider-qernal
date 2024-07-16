@@ -126,7 +126,7 @@ func (d *organisationDataSource) Read(ctx context.Context, req datasource.ReadRe
 }
 
 type organisationsecretDataSourceModel struct {
-	OrganisationID types.String          `tfsdk:"project_id"`
+	OrganisationID types.String          `tfsdk:"organisation_id"`
 	Name           types.String          `tfsdk:"name"`
 	UserID         types.String          `tfsdk:"user_id"`
 	Date           basetypes.ObjectValue `tfsdk:"date"`
