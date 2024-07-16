@@ -132,6 +132,7 @@ func (p *qernalProvider) DataSources(_ context.Context) []func() datasource.Data
 		qernalresource.NewcertificateDataSource,
 		qernalresource.NewenvironmentDataSource,
 		qernalresource.NewregistryDataSource,
+		qernalresource.NeworganisationDataSource,
 		qernalresource.NewhostDataSource,
 		qernalresource.NewproviderDataSource,
 	}
