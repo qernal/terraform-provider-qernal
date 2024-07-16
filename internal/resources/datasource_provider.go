@@ -6,8 +6,10 @@ import (
 	"strings"
 	qernalclient "terraform-provider-qernal/internal/client"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	openapi_chaos_client "github.com/qernal/openapi-chaos-go-client"
 )
@@ -59,6 +61,9 @@ func (r *providerDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 			"name": schema.StringAttribute{
 				Description: "name of the qernal provider provider",
 				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("aws", "gcp"),
+				},
 			},
 			"continents": schema.ListAttribute{
 				ElementType: types.StringType,
