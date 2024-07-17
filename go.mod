@@ -7,7 +7,7 @@ require (
 	github.com/hashicorp/terraform-plugin-framework v1.10.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.13.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
-	github.com/qernal/openapi-chaos-go-client v0.0.0-20240711184722-5ce526a30870
+	github.com/qernal/openapi-chaos-go-client v0.0.0-20240715205730-22d34df9d602
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/crypto v0.21.0
 	golang.org/x/oauth2 v0.17.0
