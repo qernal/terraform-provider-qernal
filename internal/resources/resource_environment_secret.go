@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"strings"
 	"terraform-provider-qernal/internal/client"
 	qernalclient "terraform-provider-qernal/internal/client"
 
@@ -132,7 +133,7 @@ func (r *environmentsecretResource) Create(ctx context.Context, req resource.Cre
 
 	encryptionRef := fmt.Sprintf(`keys/dek/%d`, keyRes.Revision)
 
-	secretBody := openapiclient.NewSecretBody(plan.Name.ValueString(), secretType, payload, encryptionRef)
+	secretBody := openapiclient.NewSecretBody(strings.ToUpper(plan.Name.ValueString()), secretType, payload, encryptionRef)
 
 	secretRes, httpRes, err := r.client.SecretsAPI.ProjectsSecretsCreate(ctx, plan.ProjectID.ValueString()).SecretBody(*secretBody).Execute()
 
