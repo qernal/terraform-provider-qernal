@@ -35,7 +35,7 @@ jobs:
 
       - name: Run tests
         run: |
-          go test ./tests
+          go test ./tests -v
         env:
           # TODO: switch from the build environment
           QERNAL_HOST_CHAOS: https://chaos.bld2.qernal-bld.dev
