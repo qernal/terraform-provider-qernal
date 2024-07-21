@@ -1,0 +1,43 @@
+# Workflow for testing resource usage to the Qernal
+# cloud provider - this is a full E2E test to prove
+# the working nature of all components and dependencies
+name: Terratest E2E Tests
+
+# TODO: correct ignores/additions
+on:
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+  push:
+    paths-ignore:
+      - 'README.md'
+
+permissions:
+  contents: read
+
+jobs:
+  terratest:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - run: |
+          go mod download
+          make local-build
+          make local-install
+
+      - name: Run tests
+        run: |
+          go test ./tests
+        env:
+          # TODO: switch from the build environment
+          QERNAL_HOST_CHAOS: https://chaos.bld2.qernal-bld.dev
+          QERNAL_HOST_HYDRA: https://hydra.bld2.qernal-bld.dev
+          QERNAL_TOKEN: ${{ secrets.QERNAL_TOKEN }}
