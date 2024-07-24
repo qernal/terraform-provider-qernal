@@ -12,7 +12,7 @@ variable "qernal_token" {}
 
 
 provider "qernal" {
-  token      = var.qernal_token
+  token = var.qernal_token
 }
 
 

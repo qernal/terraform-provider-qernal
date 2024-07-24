@@ -16,7 +16,7 @@ variable "auth_token" {}
 
 
 provider "qernal" {
-  token      = var.qernal_token
+  token = var.qernal_token
 }
 
 resource "qernal_secret_registry" "example" {
