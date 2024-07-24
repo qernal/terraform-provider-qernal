@@ -1,3 +1,24 @@
+
+terraform {
+  required_providers {
+    qernal = {
+      source = "qernal/qernal"
+    }
+  }
+}
+
+
+
+variable "qernal_token" {}
+variable "project_id" {}
+
+variable "auth_token" {}
+
+
+provider "qernal" {
+  token = var.qernal_token
+}
+
 resource "qernal_secret_registry" "example" {
   name         = "my-registry"
   project_id   = "project-123"

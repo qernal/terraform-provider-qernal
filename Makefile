@@ -1,9 +1,9 @@
 # Values to install the provider locally for testing purposes
 HOSTNAME=registry.terraform.io
-NAMESPACE=qernal 
+NAMESPACE=qernal
 NAME=qernal
 BINARY=terraform-provider-${NAME}
-VERSION=1.0
+VERSION=1.0.0
 OS_ARCH=$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)
 
 
