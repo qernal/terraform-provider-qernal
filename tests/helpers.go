@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/google/uuid"
@@ -86,4 +87,24 @@ func deleteOrg(orgid string) {
 		fmt.Fprintf(os.Stderr, "Error when calling `OrganisationsAPI.OrganisationsDelete``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+}
+
+func cleanupTerraformFiles(modulePath string) error {
+	// List of files/directories to remove
+	tfFiles := []string{
+		".terraform",
+		".terraform.lock.hcl",
+		"terraform.tfstate",
+		"terraform.tfstate.backup",
+	}
+
+	for _, item := range tfFiles {
+		fullPath := filepath.Join(modulePath, item)
+		err := os.RemoveAll(fullPath)
+		if err != nil {
+			return fmt.Errorf("failed to remove %s: %w", fullPath, err)
+		}
+	}
+
+	return nil
 }
