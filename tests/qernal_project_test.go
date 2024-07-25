@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gruntwork-io/terratest/modules/files"
 	"github.com/gruntwork-io/terratest/modules/terraform"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValidProject(t *testing.T) {
@@ -40,5 +41,38 @@ func TestValidProject(t *testing.T) {
 
 	terraform.InitAndApply(t, terraformOptions)
 
-	// TODO: validate output
+	// validate output
+	tfProjectName := terraform.Output(t, terraformOptions, "project_name")
+	assert.Equal(t, projectName, tfProjectName)
+}
+
+func TestOrganisationDataSource(t *testing.T) {
+	t.Parallel()
+
+	orgId, _, err := createOrg()
+	if err != nil {
+		t.Fatal("Failed to create org")
+	}
+
+	moduleName := "./modules/org_datasource"
+
+	// Copy provider.tf
+	defer os.Remove(fmt.Sprintf("%s/provider.tf", moduleName))
+	files.CopyFile("./modules/provider.tf", fmt.Sprintf("%s/provider.tf", moduleName))
+
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: moduleName,
+		Vars: map[string]interface{}{
+			"org_id": orgId,
+		},
+	})
+
+	defer terraform.Destroy(t, terraformOptions)
+
+	terraform.InitAndApply(t, terraformOptions)
+
+	// Validate output
+	tfOrgID := terraform.Output(t, terraformOptions, "organisation_id")
+	assert.Equal(t, orgId, tfOrgID)
+
 }
