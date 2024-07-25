@@ -20,8 +20,10 @@ func TestValidOrg(t *testing.T) {
 
 	// copy provider.tf
 	defer os.Remove(fmt.Sprintf("%s/provider.tf", moduleName))
-	files.CopyFile("./modules/provider.tf", fmt.Sprintf("%s/provider.tf", moduleName))
-
+	err := files.CopyFile("./modules/provider.tf", fmt.Sprintf("%s/provider.tf", moduleName))
+	if err != nil {
+		t.Error("failed to copy file")
+	}
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: moduleName,
 		Vars: map[string]interface{}{

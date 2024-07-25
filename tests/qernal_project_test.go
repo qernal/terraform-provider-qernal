@@ -58,7 +58,6 @@ func TestOrganisationDataSource(t *testing.T) {
 
 	// Copy provider.tf
 	defer os.Remove(fmt.Sprintf("%s/provider.tf", moduleName))
-	files.CopyFile("./modules/provider.tf", fmt.Sprintf("%s/provider.tf", moduleName))
 
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: moduleName,
