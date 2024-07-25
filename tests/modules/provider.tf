@@ -1,8 +1,8 @@
 terraform {
   required_providers {
     qernal = {
-      source  = "registry.terraform.io/qernal/qernal"
-      # version = "1.0.0"
+      source  = "qernal/qernal"
+      version = "0.0.3"
     }
   }
 }
