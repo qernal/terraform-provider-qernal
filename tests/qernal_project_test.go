@@ -26,7 +26,7 @@ func TestValidProject(t *testing.T) {
 
 	// copy provider.tf
 	defer os.Remove(fmt.Sprintf("%s/provider.tf", moduleName))
-	files.CopyFile("./modules/provider.tf", fmt.Sprintf("%s/provider.tf", moduleName))
+	err = files.CopyFile("./modules/provider.tf", fmt.Sprintf("%s/provider.tf", moduleName))
 	if err != nil {
 		t.Fatal("failed to copy provider file")
 	}
@@ -67,7 +67,7 @@ func TestOrganisationDataSource(t *testing.T) {
 
 	// Copy provider.tf
 	defer os.Remove(fmt.Sprintf("%s/provider.tf", moduleName))
-	files.CopyFile("./modules/provider.tf", fmt.Sprintf("%s/provider.tf", moduleName))
+	err = files.CopyFile("./modules/provider.tf", fmt.Sprintf("%s/provider.tf", moduleName))
 	if err != nil {
 		t.Fatal("failed to copy provider file")
 	}
