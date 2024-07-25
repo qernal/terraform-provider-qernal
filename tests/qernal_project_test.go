@@ -31,6 +31,12 @@ func TestValidProject(t *testing.T) {
 		t.Fatal("failed to copy provider file")
 	}
 
+	defer func() {
+		if err := cleanupTerraformFiles(moduleName); err != nil {
+			t.Logf("Warning: Failed to clean up Terraform files: %v", err)
+		}
+	}()
+
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: moduleName,
 		Vars: map[string]interface{}{
@@ -65,6 +71,12 @@ func TestOrganisationDataSource(t *testing.T) {
 	if err != nil {
 		t.Fatal("failed to copy provider file")
 	}
+
+	defer func() {
+		if err := cleanupTerraformFiles(moduleName); err != nil {
+			t.Logf("Warning: Failed to clean up Terraform files: %v", err)
+		}
+	}()
 
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: moduleName,

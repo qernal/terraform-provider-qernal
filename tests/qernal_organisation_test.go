@@ -31,6 +31,12 @@ func TestValidOrg(t *testing.T) {
 		},
 	})
 
+	defer func() {
+		if err := cleanupTerraformFiles(moduleName); err != nil {
+			t.Logf("Warning: Failed to clean up Terraform files: %v", err)
+		}
+	}()
+
 	defer terraform.Destroy(t, terraformOptions)
 
 	terraform.InitAndApply(t, terraformOptions)
