@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gruntwork-io/terratest/modules/files"
 	"github.com/gruntwork-io/terratest/modules/terraform"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValidOrg(t *testing.T) {
@@ -31,4 +32,8 @@ func TestValidOrg(t *testing.T) {
 	defer terraform.Destroy(t, terraformOptions)
 
 	terraform.InitAndApply(t, terraformOptions)
+
+	// validate output
+	tfOrgName := terraform.Output(t, terraformOptions, "organisation_name")
+	assert.Equal(t, orgName, tfOrgName)
 }
