@@ -76,7 +76,7 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
-      - run: go test $(go list ./... | grep -v /tests/) # TODO: merge E2E and unit tests into matrix
+      - run: go test $(go list ./... | grep -v /tests) # TODO: merge E2E and unit tests into matrix
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ matrix.terraform }}
