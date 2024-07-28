@@ -7,7 +7,7 @@ resource "qernal_function" "function" {
   version     = "1.0.0"
   name        = var.function_name
   description = "Hello world"
-  image       = "ealen/echo-server:0.9.2"
+  image       = "testcontainers/helloworld:1.1.0"
   port        = 80
   type        = "http"
 
