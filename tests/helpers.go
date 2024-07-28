@@ -89,6 +89,50 @@ func deleteOrg(orgid string) {
 	}
 }
 
+func createProj(orgid string) (string, string, error) {
+	client := qernalClient()
+	projectBody := *openapi_chaos_client.NewProjectBody(orgid, uuid.NewString())
+	resp, r, err := client.ProjectsAPI.ProjectsCreate(context.Background()).ProjectBody(projectBody).Execute()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `ProjectsAPI.ProjectsCreate``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+
+		return "", "", err
+	}
+
+	return resp.Id, resp.Name, nil
+}
+
+func deleteProj(projid string) {
+	client := qernalClient()
+	_, r, err := client.ProjectsAPI.ProjectsDelete(context.Background(), projid).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `ProjectsAPI.ProjectsDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+}
+
+func getDefaultHost(projid string) (string, error) {
+	client := qernalClient()
+	resp, r, err := client.HostsAPI.ProjectsHostsList(context.Background(), projid).Execute()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `ProjectsAPI.ProjectsCreate``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+
+		return "", err
+	}
+
+	for _, host := range resp.Data {
+		if host.ReadOnly {
+			return host.Host, nil
+		}
+	}
+
+	return "", errors.New("no default host on project")
+}
+
 func cleanupTerraformFiles(modulePath string) error {
 	// List of files/directories to remove
 	tfFiles := []string{
