@@ -20,7 +20,7 @@ func TestEnvironmentSecret(t *testing.T) {
 		t.Fatal("Failed to create org")
 	}
 
-	projectId, _, err := createProject(orgId)
+	projectId, _, err := createProj(orgId)
 	if err != nil {
 		t.Fatal("Failed to create project")
 	}
@@ -52,7 +52,7 @@ func TestEnvironmentSecret(t *testing.T) {
 		},
 	})
 
-	defer deleteProject(projectId)
+	defer deleteProj(projectId)
 	defer deleteOrg(orgId)
 	defer terraform.Destroy(t, terraformOptions)
 
