@@ -64,7 +64,7 @@ func TestProjectDataSource(t *testing.T) {
 		t.Fatal("Failed to create org")
 	}
 
-	projectId, projectName, err := createProject(orgId)
+	projectId, projectName, err := createProj(orgId)
 	if err != nil {
 		t.Fatal("Failed to create test org")
 	}
@@ -85,7 +85,7 @@ func TestProjectDataSource(t *testing.T) {
 		},
 	})
 
-	defer deleteProject(projectId)
+	defer deleteProj(projectId)
 	defer deleteOrg(orgId)
 
 	defer terraform.Destroy(t, terraformOptions)
