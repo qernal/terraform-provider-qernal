@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
-
 	"github.com/google/uuid"
 	openapi_chaos_client "github.com/qernal/openapi-chaos-go-client"
 	"golang.org/x/oauth2/clientcredentials"
+	"math/rand"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 var (
@@ -80,6 +80,24 @@ func createOrg() (string, string, error) {
 	return resp.Id, resp.Name, nil
 }
 
+func createProject(orgid string) (string, string, error) {
+
+	client := qernalClient()
+
+	projectbody := *openapi_chaos_client.NewProjectBody(orgid, uuid.NewString())
+
+	resp, r, err := client.ProjectsAPI.ProjectsCreate(context.Background()).ProjectBody(projectbody).Execute()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `ProjectsAPI.ProjectsCreate`: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+
+		return "", "", err
+	}
+
+	return resp.Id, resp.Name, nil
+}
+
 func deleteOrg(orgid string) {
 	client := qernalClient()
 	_, r, err := client.OrganisationsAPI.OrganisationsDelete(context.Background(), orgid).Execute()
@@ -133,7 +151,21 @@ func getDefaultHost(projid string) (string, error) {
 	return "", errors.New("no default host on project")
 }
 
+func deleteProject(projectid string) {
+	client := qernalClient()
+
+	_, r, err := client.ProjectsAPI.ProjectsDelete(context.Background(), projectid).Execute()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `ProjectsAPI.ProjectsDelete`: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+
+	}
+
+}
+
 func cleanupTerraformFiles(modulePath string) error {
+
 	// List of files/directories to remove
 	tfFiles := []string{
 		".terraform",
@@ -151,4 +183,13 @@ func cleanupTerraformFiles(modulePath string) error {
 	}
 
 	return nil
+}
+
+func randomSecretName() string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, 4)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return fmt.Sprintf("terra%s", string(b))
 }
