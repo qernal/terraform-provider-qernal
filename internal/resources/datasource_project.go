@@ -43,7 +43,7 @@ func (r *projectDataSource) Configure(ctx context.Context, req datasource.Config
 
 // Metadata returns the data source type name.
 func (d *projectDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_project_secret"
+	resp.TypeName = req.ProviderTypeName + "_project"
 }
 
 // Schema defines the schema for the data source.
