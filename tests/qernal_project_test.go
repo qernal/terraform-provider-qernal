@@ -55,7 +55,8 @@ func TestValidProject(t *testing.T) {
 	assert.Equal(t, projectName, tfProjectName)
 }
 
-func TestOrganisationDataSource(t *testing.T) {
+func TestProjectDataSource(t *testing.T) {
+
 	t.Parallel()
 
 	orgId, _, err := createOrg()
@@ -63,35 +64,35 @@ func TestOrganisationDataSource(t *testing.T) {
 		t.Fatal("Failed to create org")
 	}
 
-	moduleName := "./modules/org_datasource"
+	projectId, projectName, err := createProject(orgId)
+	if err != nil {
+		t.Fatal("Failed to create test org")
+	}
+	// define a project name and validate it in the response
+	moduleName := "./modules/project_datasource/"
 
-	// Copy provider.tf
+	// copy provider.tf
 	defer os.Remove(fmt.Sprintf("%s/provider.tf", moduleName))
 	err = files.CopyFile("./modules/provider.tf", fmt.Sprintf("%s/provider.tf", moduleName))
 	if err != nil {
 		t.Fatal("failed to copy provider file")
 	}
 
-	defer func() {
-		if err := cleanupTerraformFiles(moduleName); err != nil {
-			t.Logf("Warning: Failed to clean up Terraform files: %v", err)
-		}
-	}()
-
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: moduleName,
 		Vars: map[string]interface{}{
-			"org_id": orgId,
+			"project_id": projectId,
 		},
 	})
 
+	defer deleteProject(projectId)
 	defer deleteOrg(orgId)
+
 	defer terraform.Destroy(t, terraformOptions)
 
 	terraform.InitAndApply(t, terraformOptions)
 
-	// Validate output
-	tfOrgID := terraform.Output(t, terraformOptions, "organisation_id")
-	assert.Equal(t, orgId, tfOrgID)
-
+	// validate output
+	tfProjectName := terraform.Output(t, terraformOptions, "project_name")
+	assert.Equal(t, projectName, tfProjectName)
 }
