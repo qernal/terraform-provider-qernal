@@ -17,12 +17,12 @@ description: |-
 
 ### Required
 
-- `project_id` (String)
+- `name` (String) Name of the project
 
 ### Read-Only
 
 - `date` (Attributes) (see [below for nested schema](#nestedatt--date))
-- `name` (String) Name of the project
+- `id` (String) The ID of this resource.
 - `org_id` (String) Organisation associated with the project
 
 <a id="nestedatt--date"></a>
