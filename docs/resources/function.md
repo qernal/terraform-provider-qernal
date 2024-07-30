@@ -18,12 +18,10 @@ description: |-
 ### Required
 
 - `compliance` (List of String) Compliance standards the function adheres to, one of soc or ipv6
-- `deployments` (Attributes List) List of deployments for the function, specifying locations and replicas. (see [below for nested schema](#nestedatt--deployments))
 - `image` (String) Container image for the function.
 - `name` (String) Name of the function.
 - `port` (Number) Port on which the function will listen for incoming requests.
 - `project_id` (String) ID of the project where the function will be deployed.
-- `routes` (Attributes List) List of routes that define the function's endpoints. (see [below for nested schema](#nestedatt--routes))
 - `scaling` (Attributes) Scaling configuration for the function. (see [below for nested schema](#nestedatt--scaling))
 - `size` (Attributes) Size configuration for the function, specifying CPU and memory resources. (see [below for nested schema](#nestedatt--size))
 - `type` (String) Type of the function (e.g., HTTP, Event-driven).
@@ -31,14 +29,35 @@ description: |-
 
 ### Optional
 
+- `deployments` (Block List) List of deployments for the function, specifying locations and replicas. (see [below for nested schema](#nestedblock--deployments))
 - `description` (String) A brief description of the function.
+- `routes` (Block List) List of routes that define the function's endpoints. (see [below for nested schema](#nestedblock--routes))
 - `secrets` (Attributes List) List of secrets used by the function. (see [below for nested schema](#nestedatt--secrets))
 
 ### Read-Only
 
 - `id` (String) Unique identifier for the function, assigned automatically upon creation.
 
-<a id="nestedatt--deployments"></a>
+<a id="nestedatt--scaling"></a>
+### Nested Schema for `scaling`
+
+Required:
+
+- `high` (Number) Upper bound for scaling.
+- `low` (Number) Lower bound for scaling.
+- `type` (String) Type of scaling (can be either CPU or Memory).
+
+
+<a id="nestedatt--size"></a>
+### Nested Schema for `size`
+
+Required:
+
+- `cpu` (Number) Amount of CPU allocated to the function.
+- `memory` (Number) Amount of memory allocated to the function.
+
+
+<a id="nestedblock--deployments"></a>
 ### Nested Schema for `deployments`
 
 Required:
@@ -77,7 +96,7 @@ Required:
 
 
 
-<a id="nestedatt--routes"></a>
+<a id="nestedblock--routes"></a>
 ### Nested Schema for `routes`
 
 Required:
@@ -85,25 +104,6 @@ Required:
 - `methods` (List of String) HTTP methods supported by the route (e.g., GET, POST).
 - `path` (String) Path of the route.
 - `weight` (Number) Weight of the route for load balancing.
-
-
-<a id="nestedatt--scaling"></a>
-### Nested Schema for `scaling`
-
-Required:
-
-- `high` (Number) Upper bound for scaling.
-- `low` (Number) Lower bound for scaling.
-- `type` (String) Type of scaling (can be either CPU or Memory).
-
-
-<a id="nestedatt--size"></a>
-### Nested Schema for `size`
-
-Required:
-
-- `cpu` (Number) Amount of CPU allocated to the function.
-- `memory` (Number) Amount of memory allocated to the function.
 
 
 <a id="nestedatt--secrets"></a>
