@@ -17,12 +17,12 @@ description: |-
 
 ### Required
 
-- `organisation_id` (String)
+- `name` (String) Name of the organisation
 
 ### Read-Only
 
 - `date` (Attributes) (see [below for nested schema](#nestedatt--date))
-- `name` (String) Name of the organisation
+- `id` (String) ID of the organisation
 - `user_id` (String) User ID associated with the organisation
 
 <a id="nestedatt--date"></a>
