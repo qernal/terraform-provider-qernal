@@ -65,8 +65,9 @@ func TestProjectDataSource(t *testing.T) {
 
 	projectId, projectName, err := createProj(orgId)
 	if err != nil {
-		t.Fatal("Failed to create test org")
+		t.Fatal("Failed to create test project")
 	}
+
 	// define a project name and validate it in the response
 	moduleName := "./modules/project_datasource_by_name"
 
@@ -80,7 +81,7 @@ func TestProjectDataSource(t *testing.T) {
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: moduleName,
 		Vars: map[string]interface{}{
-			"project_id": projectId,
+			"project_name": projectName,
 		},
 	})
 
