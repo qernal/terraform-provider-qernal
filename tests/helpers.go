@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	openapi_chaos_client "github.com/qernal/openapi-chaos-go-client"
-	"golang.org/x/oauth2/clientcredentials"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/google/uuid"
+	openapi_chaos_client "github.com/qernal/openapi-chaos-go-client"
+	"golang.org/x/oauth2/clientcredentials"
 )
 
 var (

@@ -1,6 +1,11 @@
+variable "project_id" {
+  type = string
+}
 
-variable "project_id" {}
+variable "secret_name" {
+  type = string
+}
 
-variable "secret_name" {}
-
-variable "secret_value" {}
+variable "secret_value" {
+  type = string
+}
