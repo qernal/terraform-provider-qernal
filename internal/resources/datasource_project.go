@@ -50,12 +50,12 @@ func (d *projectDataSource) Metadata(_ context.Context, req datasource.MetadataR
 func (d *projectDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"project_id": schema.StringAttribute{
-				Required: true,
+			"id": schema.StringAttribute{
+				Computed: true,
 			},
 
 			"name": schema.StringAttribute{
-				Computed:    true,
+				Required:    true,
 				Description: "Name of the project",
 			},
 
@@ -93,7 +93,7 @@ func (d *projectDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	project, httpRes, err := d.client.ProjectsAPI.ProjectsGet(ctx, data.ProjectID.ValueString()).Execute()
+	projects, httpRes, err := d.client.ProjectsAPI.ProjectsList(ctx).FName(data.Name.ValueString()).Execute()
 
 	if err != nil {
 
@@ -104,6 +104,12 @@ func (d *projectDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
+	if len(projects.Data) <= 0 {
+		resp.Diagnostics.AddError("Project Not found", "unable to find project with name "+data.Name.ValueString())
+		return
+	}
+
+	project := projects.Data[0]
 	data.Name = types.StringValue(project.Name)
 
 	data.ProjectID = types.StringValue(data.ProjectID.ValueString())
@@ -126,7 +132,7 @@ func (d *projectDataSource) Read(ctx context.Context, req datasource.ReadRequest
 }
 
 type projectsecretDataSourceModel struct {
-	ProjectID types.String          `tfsdk:"project_id"`
+	ProjectID types.String          `tfsdk:"id"`
 	Name      types.String          `tfsdk:"name"`
 	OrgID     types.String          `tfsdk:"org_id"`
 	Date      basetypes.ObjectValue `tfsdk:"date"`
