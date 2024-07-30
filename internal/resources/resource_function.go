@@ -53,6 +53,85 @@ func (r *FunctionResource) Metadata(_ context.Context, req resource.MetadataRequ
 
 func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Blocks: map[string]schema.Block{
+			"routes": schema.ListNestedBlock{
+				Description: "List of routes that define the function's endpoints.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"path": schema.StringAttribute{
+							Required:    true,
+							Description: "Path of the route.",
+						},
+						"methods": schema.ListAttribute{
+							ElementType: types.StringType,
+							Required:    true,
+							Description: "HTTP methods supported by the route (e.g., GET, POST).",
+						},
+						"weight": schema.Int64Attribute{
+							Required:    true,
+							Description: "Weight of the route for load balancing.",
+						},
+					},
+				},
+			},
+			"deployments": schema.ListNestedBlock{
+				Description: "List of deployments for the function, specifying locations and replicas.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"location": schema.SingleNestedAttribute{
+							Required:    true,
+							Description: "Deployment location details.",
+							Attributes: map[string]schema.Attribute{
+								"provider_id": schema.StringAttribute{
+									Required:    true,
+									Description: "ID of the cloud provider.",
+								},
+								"continent": schema.StringAttribute{
+									Required:    true,
+									Description: "Continent where the deployment is located.",
+								},
+								"country": schema.StringAttribute{
+									Required:    true,
+									Description: "Country where the deployment is located.",
+								},
+								"city": schema.StringAttribute{
+									Required:    true,
+									Description: "City where the deployment is located.",
+								},
+							},
+						},
+						"replicas": schema.SingleNestedAttribute{
+							Required:    true,
+							Description: "Replica configuration for the deployment.",
+							Attributes: map[string]schema.Attribute{
+								"min": schema.Int64Attribute{
+									Required:    true,
+									Description: "Minimum number of replicas.",
+								},
+								"max": schema.Int64Attribute{
+									Required:    true,
+									Description: "Maximum number of replicas.",
+								},
+								"affinity": schema.SingleNestedAttribute{
+									Required:    true,
+									Description: "Affinity settings for replicas.",
+									Attributes: map[string]schema.Attribute{
+										"cluster": schema.BoolAttribute{
+											Required:    true,
+											Description: "Indicates if replicas should be clustered.",
+										},
+										"cloud": schema.BoolAttribute{
+											Required:    true,
+											Description: "Indicates if replicas should be spread across multiple clouds.",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required: false,
@@ -113,27 +192,6 @@ func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Required:    true,
 				Description: "Port on which the function will listen for incoming requests.",
 			},
-			"routes": schema.ListNestedAttribute{
-				Required:    true,
-				Description: "List of routes that define the function's endpoints.",
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"path": schema.StringAttribute{
-							Required:    true,
-							Description: "Path of the route.",
-						},
-						"methods": schema.ListAttribute{
-							ElementType: types.StringType,
-							Required:    true,
-							Description: "HTTP methods supported by the route (e.g., GET, POST).",
-						},
-						"weight": schema.Int64Attribute{
-							Required:    true,
-							Description: "Weight of the route for load balancing.",
-						},
-					},
-				},
-			},
 			"scaling": schema.SingleNestedAttribute{
 				Required:    true,
 				Description: "Scaling configuration for the function.",
@@ -149,64 +207,6 @@ func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					"high": schema.Int64Attribute{
 						Required:    true,
 						Description: "Upper bound for scaling.",
-					},
-				},
-			},
-			"deployments": schema.ListNestedAttribute{
-				Required:    true,
-				Description: "List of deployments for the function, specifying locations and replicas.",
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"location": schema.SingleNestedAttribute{
-							Required:    true,
-							Description: "Deployment location details.",
-							Attributes: map[string]schema.Attribute{
-								"provider_id": schema.StringAttribute{
-									Required:    true,
-									Description: "ID of the cloud provider.",
-								},
-								"continent": schema.StringAttribute{
-									Required:    true,
-									Description: "Continent where the deployment is located.",
-								},
-								"country": schema.StringAttribute{
-									Required:    true,
-									Description: "Country where the deployment is located.",
-								},
-								"city": schema.StringAttribute{
-									Required:    true,
-									Description: "City where the deployment is located.",
-								},
-							},
-						},
-						"replicas": schema.SingleNestedAttribute{
-							Required:    true,
-							Description: "Replica configuration for the deployment.",
-							Attributes: map[string]schema.Attribute{
-								"min": schema.Int64Attribute{
-									Required:    true,
-									Description: "Minimum number of replicas.",
-								},
-								"max": schema.Int64Attribute{
-									Required:    true,
-									Description: "Maximum number of replicas.",
-								},
-								"affinity": schema.SingleNestedAttribute{
-									Required:    true,
-									Description: "Affinity settings for replicas.",
-									Attributes: map[string]schema.Attribute{
-										"cluster": schema.BoolAttribute{
-											Required:    true,
-											Description: "Indicates if replicas should be clustered.",
-										},
-										"cloud": schema.BoolAttribute{
-											Required:    true,
-											Description: "Indicates if replicas should be spread across multiple clouds.",
-										},
-									},
-								},
-							},
-						},
 					},
 				},
 			},
