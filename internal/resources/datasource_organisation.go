@@ -50,12 +50,13 @@ func (d *organisationDataSource) Metadata(_ context.Context, req datasource.Meta
 func (d *organisationDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"organisation_id": schema.StringAttribute{
-				Required: true,
+			"id": schema.StringAttribute{
+				Computed:    true,
+				Description: "ID of the organisation",
 			},
 
 			"name": schema.StringAttribute{
-				Computed:    true,
+				Required:    true,
 				Description: "Name of the organisation",
 			},
 
@@ -93,7 +94,7 @@ func (d *organisationDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	organisation, httpRes, err := d.client.OrganisationsAPI.OrganisationsGet(ctx, data.OrganisationID.ValueString()).Execute()
+	organisations, httpRes, err := d.client.OrganisationsAPI.OrganisationsList(ctx).FName(data.Name.ValueString()).Execute()
 
 	if err != nil {
 
@@ -104,9 +105,16 @@ func (d *organisationDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
+	if len(organisations.Data) <= 0 {
+		resp.Diagnostics.AddError("Unable to find organisation", "Unable to find organisation with name "+data.OrganisationID.String())
+		return
+	}
+
+	organisation := organisations.Data[0]
+
 	data.Name = types.StringValue(organisation.Name)
 
-	data.OrganisationID = types.StringValue(data.OrganisationID.ValueString())
+	data.OrganisationID = types.StringValue(organisation.Id)
 
 	data.UserID = types.StringValue(organisation.UserId)
 
@@ -126,7 +134,7 @@ func (d *organisationDataSource) Read(ctx context.Context, req datasource.ReadRe
 }
 
 type organisationsecretDataSourceModel struct {
-	OrganisationID types.String          `tfsdk:"organisation_id"`
+	OrganisationID types.String          `tfsdk:"id"`
 	Name           types.String          `tfsdk:"name"`
 	UserID         types.String          `tfsdk:"user_id"`
 	Date           basetypes.ObjectValue `tfsdk:"date"`
