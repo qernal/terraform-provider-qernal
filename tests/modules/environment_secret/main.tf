@@ -11,4 +11,3 @@ output "secret_name" {
 output "secret_value" {
   value = qernal_secret_environment.example.value
 }
-

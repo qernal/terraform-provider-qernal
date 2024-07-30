@@ -56,7 +56,6 @@ func TestValidProject(t *testing.T) {
 }
 
 func TestProjectDataSource(t *testing.T) {
-
 	t.Parallel()
 
 	orgId, _, err := createOrg()
@@ -69,7 +68,7 @@ func TestProjectDataSource(t *testing.T) {
 		t.Fatal("Failed to create test org")
 	}
 	// define a project name and validate it in the response
-	moduleName := "./modules/project_datasource/"
+	moduleName := "./modules/project_datasource_by_name"
 
 	// copy provider.tf
 	defer os.Remove(fmt.Sprintf("%s/provider.tf", moduleName))
@@ -85,9 +84,8 @@ func TestProjectDataSource(t *testing.T) {
 		},
 	})
 
-	defer deleteProj(projectId)
 	defer deleteOrg(orgId)
-
+	defer deleteProj(projectId)
 	defer terraform.Destroy(t, terraformOptions)
 
 	terraform.InitAndApply(t, terraformOptions)
@@ -95,4 +93,7 @@ func TestProjectDataSource(t *testing.T) {
 	// validate output
 	tfProjectName := terraform.Output(t, terraformOptions, "project_name")
 	assert.Equal(t, projectName, tfProjectName)
+
+	tfProjectId := terraform.Output(t, terraformOptions, "project_id")
+	assert.Equal(t, projectId, tfProjectId)
 }

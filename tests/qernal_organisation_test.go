@@ -49,12 +49,12 @@ func TestValidOrg(t *testing.T) {
 func TestOrganisationDataSource(t *testing.T) {
 	t.Parallel()
 
-	orgId, _, err := createOrg()
+	orgId, orgName, err := createOrg()
 	if err != nil {
 		t.Fatal("Failed to create org")
 	}
 
-	moduleName := "./modules/org_datasource"
+	moduleName := "./modules/org_datasource_by_name"
 
 	// Copy provider.tf
 	defer os.Remove(fmt.Sprintf("%s/provider.tf", moduleName))
@@ -72,7 +72,7 @@ func TestOrganisationDataSource(t *testing.T) {
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: moduleName,
 		Vars: map[string]interface{}{
-			"org_id": orgId,
+			"org_name": orgName,
 		},
 	})
 
@@ -85,4 +85,6 @@ func TestOrganisationDataSource(t *testing.T) {
 	tfOrgID := terraform.Output(t, terraformOptions, "organisation_id")
 	assert.Equal(t, orgId, tfOrgID)
 
+	tfOrgName := terraform.Output(t, terraformOptions, "organisation_name")
+	assert.Equal(t, orgName, tfOrgName)
 }
