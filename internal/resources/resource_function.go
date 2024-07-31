@@ -54,7 +54,7 @@ func (r *FunctionResource) Metadata(_ context.Context, req resource.MetadataRequ
 func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Blocks: map[string]schema.Block{
-			"routes": schema.ListNestedBlock{
+			"route": schema.ListNestedBlock{
 				Description: "List of routes that define the function's endpoints.",
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
@@ -74,7 +74,7 @@ func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					},
 				},
 			},
-			"deployments": schema.ListNestedBlock{
+			"deployment": schema.ListNestedBlock{
 				Description: "List of deployments for the function, specifying locations and replicas.",
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
@@ -87,15 +87,18 @@ func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 									Description: "ID of the cloud provider.",
 								},
 								"continent": schema.StringAttribute{
-									Required:    true,
+									Required:    false, // TODO: atLeastOneOf (continent, country or city)
+									Optional:    true,  // TODO:
 									Description: "Continent where the deployment is located.",
 								},
 								"country": schema.StringAttribute{
-									Required:    true,
+									Required:    false, // TODO: atLeastOneOf (continent, country or city)
+									Optional:    true,  // TODO:
 									Description: "Country where the deployment is located.",
 								},
 								"city": schema.StringAttribute{
-									Required:    true,
+									Required:    false, // TODO: atLeastOneOf (continent, country or city)
+									Optional:    true,  // TODO:
 									Description: "City where the deployment is located.",
 								},
 							},
@@ -228,7 +231,8 @@ func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"compliance": schema.ListAttribute{
 				ElementType: types.StringType,
-				Required:    true,
+				Required:    false,
+				Optional:    true,
 				Description: "Compliance standards the function adheres to, one of soc or ipv6 ",
 			},
 		},
@@ -247,8 +251,8 @@ func (r *FunctionResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	functionSize := openapiclient.NewFunctionSize(int32(plan.Size.CPU.ValueInt64()), int32(plan.Size.Memory.ValueInt64()))
-	functionRoutes := RoutesToOpenAPI(plan.Routes)
-	functionDeployment := DeploymentsToOepnAPI(plan.Deployments)
+	functionRoutes := RoutesToOpenAPI(plan.Route)
+	functionDeployment := DeploymentsToOepnAPI(plan.Deployment)
 	functionSecrets := SecretsToOpenAPI(plan.Secrets)
 	functionCompliance := ComplianceToOpenAPI(plan.Compliance)
 
@@ -292,19 +296,16 @@ func (r *FunctionResource) Create(ctx context.Context, req resource.CreateReques
 		CPU:    types.Int64Value(int64(function.Size.Cpu)),
 		Memory: types.Int64Value(int64(function.Size.Memory)),
 	}
-
 	plan.Port = types.Int64Value(int64(function.Port))
-
-	plan.Routes = OpenAPIToRoutes(function.Routes)
+	plan.Route = OpenAPIToRoutes(function.Routes)
 	plan.Scaling = Scaling{
 		Type: types.StringValue(function.Scaling.Type),
 		Low:  types.Int64Value(int64(function.Scaling.Low)),
 		High: types.Int64Value(int64(function.Scaling.High)),
 	}
-
-	plan.Deployments = OpenAPIDeploymentsToDeployments(function.Deployments)
-
+	plan.Deployment = OpenAPIDeploymentsToDeployments(function.Deployments)
 	plan.Secrets = FunctionEnvsToSecrets(function.Secrets)
+	plan.Compliance = OpenAPIToCompliance(function.Compliance)
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, plan)
@@ -345,18 +346,13 @@ func (r *FunctionResource) Read(ctx context.Context, req resource.ReadRequest, r
 		CPU:    types.Int64Value(int64(function.Size.Cpu)),
 		Memory: types.Int64Value(int64(function.Size.Memory)),
 	}
-
 	state.Port = types.Int64Value(int64(function.Port))
-
-	state.Routes = OpenAPIToRoutes(function.Routes)
+	state.Route = OpenAPIToRoutes(function.Routes)
 	state.Scaling = Scaling{
 		Type: types.StringValue(function.Scaling.Type),
 	}
-
-	state.Deployments = OpenAPIDeploymentsToDeployments(function.Deployments)
-
+	state.Deployment = OpenAPIDeploymentsToDeployments(function.Deployments)
 	state.Compliance = OpenAPIToCompliance(function.Compliance)
-
 	state.Secrets = FunctionEnvsToSecrets(function.Secrets)
 
 	// Set refreshed state
@@ -381,7 +377,7 @@ func (r *FunctionResource) Update(ctx context.Context, req resource.UpdateReques
 
 	// Update existing Function
 	functionSize := openapiclient.NewFunctionSize(int32(plan.Size.CPU.ValueInt64()), int32(plan.Size.Memory.ValueInt64()))
-	functionRoutes := RoutesToOpenAPI(plan.Routes)
+	functionRoutes := RoutesToOpenAPI(plan.Route)
 
 	//TODO: Needs work
 	//functionDeployment := DeploymentsToOepnAPI(plan.Deployments)
@@ -437,18 +433,13 @@ func (r *FunctionResource) Update(ctx context.Context, req resource.UpdateReques
 		CPU:    types.Int64Value(int64(function.Size.Cpu)),
 		Memory: types.Int64Value(int64(function.Size.Memory)),
 	}
-
 	plan.Port = types.Int64Value(int64(function.Port))
-
-	plan.Routes = OpenAPIToRoutes(function.Routes)
+	plan.Route = OpenAPIToRoutes(function.Routes)
 	plan.Scaling = Scaling{
 		Type: types.StringValue(function.Scaling.Type),
 	}
-
-	plan.Deployments = OpenAPIDeploymentsToDeployments(function.Deployments)
-
+	plan.Deployment = OpenAPIDeploymentsToDeployments(function.Deployments)
 	plan.Compliance = OpenAPIToCompliance(function.Compliance)
-
 	plan.Secrets = FunctionEnvsToSecrets(function.Secrets)
 
 	diags = resp.State.Set(ctx, plan)
@@ -490,9 +481,9 @@ type FunctionResourceModel struct {
 	FunctionType types.String   `tfsdk:"type"`
 	Size         Size           `tfsdk:"size"`
 	Port         types.Int64    `tfsdk:"port"`
-	Routes       []Route        `tfsdk:"routes"`
+	Route        []Route        `tfsdk:"route"`
 	Scaling      Scaling        `tfsdk:"scaling"`
-	Deployments  []Deployment   `tfsdk:"deployments"`
+	Deployment   []Deployment   `tfsdk:"deployment"`
 	Secrets      []Secret       `tfsdk:"secrets"`
 	Compliance   []types.String `tfsdk:"compliance"`
 }
