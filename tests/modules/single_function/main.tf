@@ -21,7 +21,7 @@ resource "qernal_function" "function" {
     cpu    = 128
     memory = 128
   }
-  compliance = []
+  compliance = ["ipv6"] // TODO: allow this to be blank
 
   deployment {
     location = {
@@ -41,6 +41,7 @@ resource "qernal_function" "function" {
 
   route {
     path    = "/*"
-    methods = "GET, HEAD"
+    methods = ["GET", "HEAD"]
+    weight  = 100
   }
 }
