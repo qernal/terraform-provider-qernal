@@ -52,28 +52,28 @@ func (r *providerDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "id of the provider",
+				Description: "ID of provider",
 				Required:    false,
 				Computed:    true,
 			},
 			"name": schema.StringAttribute{
-				Description: "name of the qernal provider provider",
+				Description: "Name of provider",
 				Required:    true,
 			},
 			"continents": schema.ListAttribute{
 				ElementType: types.StringType,
 				Computed:    true,
-				Description: "available provider locations",
+				Description: "Available continents",
 			},
 			"countries": schema.ListAttribute{
 				ElementType: types.StringType,
-				Required:    false,
 				Computed:    true,
+				Description: "Available countries",
 			},
 			"cities": schema.ListAttribute{
 				ElementType: types.StringType,
-				Required:    false,
 				Computed:    true,
+				Description: "Available cities",
 			},
 		},
 	}
@@ -100,21 +100,22 @@ func (d *providerDataSource) Read(ctx context.Context, req datasource.ReadReques
 		resData, _ := qernalclient.ParseResponseData(httpRes)
 		resp.Diagnostics.AddError(
 			"Error Fetching providers",
-			"Could not retreive prviders, unexpected error: "+err.Error()+" with"+fmt.Sprintf(", detail: %v", resData))
+			"Could not retreive providers, unexpected error: "+err.Error()+" with"+fmt.Sprintf(", detail: %v", resData))
 		return
 	}
 
 	var qernalProvider openapi_chaos_client.Provider
 	for _, provider := range providers.Data {
-
 		if strings.EqualFold(data.Name.ValueString(), provider.Name) {
 			qernalProvider = provider
 			break
-		} else {
-			// provider not found
-			resp.Diagnostics.AddError("unable to find provider", fmt.Sprintf("could not find provider %s , pls check spelling or supported versions", data.Name))
-			return
 		}
+	}
+
+	if qernalProvider.Name == "" {
+		// provider not found
+		resp.Diagnostics.AddError("Unable to find provider", fmt.Sprintf("Unable to locate provider %s, this provider may not exist or has been removed", data.Name))
+		return
 	}
 
 	// Update resource state with updated items and timestamp
