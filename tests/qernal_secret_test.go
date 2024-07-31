@@ -52,8 +52,8 @@ func TestEnvironmentSecret(t *testing.T) {
 		},
 	})
 
-	defer deleteProj(projectId)
 	defer deleteOrg(orgId)
+	defer deleteProj(projectId)
 	defer terraform.Destroy(t, terraformOptions)
 
 	terraform.InitAndApply(t, terraformOptions)
@@ -106,8 +106,8 @@ func TestRegistrySecret(t *testing.T) {
 		},
 	})
 
-	defer deleteProj(projectId)
 	defer deleteOrg(orgId)
+	defer deleteProj(projectId)
 	defer terraform.Destroy(t, terraformOptions)
 
 	terraform.InitAndApply(t, terraformOptions)
@@ -118,5 +118,4 @@ func TestRegistrySecret(t *testing.T) {
 
 	outputSecretValue := terraform.Output(t, terraformOptions, "secret_value")
 	assert.Equal(t, registryUrl, outputSecretValue)
-
 }
