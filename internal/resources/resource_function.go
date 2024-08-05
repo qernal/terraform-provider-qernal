@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
 )
 
@@ -285,27 +286,31 @@ func (r *FunctionResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
+	FunctionEnvsToSecrets(ctx, function.Secrets)
+
 	plan.ID = types.StringValue(function.Id)
 	plan.ProjectID = types.StringValue(function.ProjectId)
 	plan.Version = types.StringValue(function.Version)
 	plan.Name = types.StringValue(function.Name)
 	plan.Description = types.StringValue(function.Description)
-	plan.Image = types.StringValue(function.Image)
+
+	// use plan docker image, api strips out the providrer(i.e ghcr.io,docker.io)
+	plan.Image = types.StringValue(plan.Image.ValueString())
 	plan.FunctionType = types.StringValue(string(function.Type))
 	plan.Size = Size{
 		CPU:    types.Int64Value(int64(function.Size.Cpu)),
 		Memory: types.Int64Value(int64(function.Size.Memory)),
 	}
 	plan.Port = types.Int64Value(int64(function.Port))
-	plan.Route = OpenAPIToRoutes(function.Routes)
+	plan.Route = OpenAPIToRoutes(ctx, function.Routes)
 	plan.Scaling = Scaling{
 		Type: types.StringValue(function.Scaling.Type),
 		Low:  types.Int64Value(int64(function.Scaling.Low)),
 		High: types.Int64Value(int64(function.Scaling.High)),
 	}
 	plan.Deployment = OpenAPIDeploymentsToDeployments(function.Deployments)
-	plan.Secrets = FunctionEnvsToSecrets(function.Secrets)
-	plan.Compliance = OpenAPIToCompliance(function.Compliance)
+	plan.Secrets = FunctionEnvsToSecrets(ctx, function.Secrets)
+	plan.Compliance = OpenAPIToCompliance(ctx, function.Compliance)
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, plan)
@@ -347,13 +352,13 @@ func (r *FunctionResource) Read(ctx context.Context, req resource.ReadRequest, r
 		Memory: types.Int64Value(int64(function.Size.Memory)),
 	}
 	state.Port = types.Int64Value(int64(function.Port))
-	state.Route = OpenAPIToRoutes(function.Routes)
+	state.Route = OpenAPIToRoutes(ctx, function.Routes)
 	state.Scaling = Scaling{
 		Type: types.StringValue(function.Scaling.Type),
 	}
 	state.Deployment = OpenAPIDeploymentsToDeployments(function.Deployments)
-	state.Compliance = OpenAPIToCompliance(function.Compliance)
-	state.Secrets = FunctionEnvsToSecrets(function.Secrets)
+	state.Compliance = OpenAPIToCompliance(ctx, function.Compliance)
+	state.Secrets = FunctionEnvsToSecrets(ctx, function.Secrets)
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
@@ -380,7 +385,7 @@ func (r *FunctionResource) Update(ctx context.Context, req resource.UpdateReques
 	functionRoutes := RoutesToOpenAPI(plan.Route)
 
 	//TODO: Needs work
-	//functionDeployment := DeploymentsToOepnAPI(plan.Deployments)
+functionDeployment := DeploymentsToOepnAPI(plan.Deployment)
 	functionSecrets := SecretsToOpenAPI(plan.Secrets)
 	functionCompliance := ComplianceToOpenAPI(plan.Compliance)
 
@@ -399,7 +404,7 @@ func (r *FunctionResource) Update(ctx context.Context, req resource.UpdateReques
 			Low:  int32(plan.Scaling.Low.ValueInt64()),
 			High: int32(plan.Scaling.High.ValueInt64()),
 		},
-		Deployments: make([]openapiclient.FunctionDeployment, 0),
+		Deployments: ,
 		Secrets:     functionSecrets,
 		Compliance:  functionCompliance,
 	}).Execute()
@@ -422,6 +427,7 @@ func (r *FunctionResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 
 	// Update resource state with updated items
+
 	plan.ID = types.StringValue(function.Id)
 	plan.ProjectID = types.StringValue(function.ProjectId)
 	plan.Version = types.StringValue(function.Version)
@@ -434,13 +440,14 @@ func (r *FunctionResource) Update(ctx context.Context, req resource.UpdateReques
 		Memory: types.Int64Value(int64(function.Size.Memory)),
 	}
 	plan.Port = types.Int64Value(int64(function.Port))
-	plan.Route = OpenAPIToRoutes(function.Routes)
+	plan.Route = OpenAPIToRoutes(ctx, function.Routes)
 	plan.Scaling = Scaling{
 		Type: types.StringValue(function.Scaling.Type),
 	}
 	plan.Deployment = OpenAPIDeploymentsToDeployments(function.Deployments)
-	plan.Compliance = OpenAPIToCompliance(function.Compliance)
-	plan.Secrets = FunctionEnvsToSecrets(function.Secrets)
+
+	plan.Compliance = OpenAPIToCompliance(ctx, function.Compliance)
+	plan.Secrets = FunctionEnvsToSecrets(ctx, function.Secrets)
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -542,6 +549,9 @@ type Secret struct {
 }
 
 func RoutesToOpenAPI(routes []Route) []openapiclient.FunctionRoute {
+	if len(routes) <= 0 {
+		return nil
+	}
 	var openAPIRoutes []openapiclient.FunctionRoute
 
 	for _, route := range routes {
@@ -638,19 +648,14 @@ func OpenAPIDeploymentsToDeployments(openAPIDeployments []openapiclient.Function
 }
 
 func SecretsToOpenAPI(secrets []Secret) []openapiclient.FunctionEnv {
-
 	var openAPIFunctionEnv []openapiclient.FunctionEnv
-	if len(openAPIFunctionEnv) <= 0 {
-		return []openapiclient.FunctionEnv{}
+	if len(secrets) <= 0 {
+		return nil
 	}
-
 	for _, env := range secrets {
-
 		funcEnv := openapiclient.NewFunctionEnv(env.Name.String(), env.Reference.ValueString())
-
 		openAPIFunctionEnv = append(openAPIFunctionEnv, *funcEnv)
 	}
-
 	return openAPIFunctionEnv
 }
 
@@ -663,30 +668,40 @@ func ComplianceToOpenAPI(compliance []types.String) []openapiclient.FunctionComp
 }
 
 // OpenAPIToCompliance converts a slice of openapiclient.FunctionCompliance to a slice of types.String
-func OpenAPIToCompliance(openAPICompliance []openapiclient.FunctionCompliance) []types.String {
+func OpenAPIToCompliance(ctx context.Context, openAPICompliance []openapiclient.FunctionCompliance) []types.String {
+	ctx = tflog.SetField(ctx, "COMPLIANCE RECEIVED", openAPICompliance)
 
-	// Initialize an empty slice of types.String with the same length as openAPICompliance
-	compliance := make([]types.String, len(openAPICompliance))
+	// Initialize the slice without a predetermined length
+	compliance := make([]types.String, 0, len(openAPICompliance))
 
 	// Iterate over each openAPICompliance
 	for _, comp := range openAPICompliance {
-		// Convert each openapiclient.FunctionCompliance to types.String
+		// Convert each openapiclient.FunctionCompliance to types.String and append
 		compliance = append(compliance, types.StringValue(string(comp)))
 	}
 
+	ctx = tflog.SetField(ctx, "COMPLIANCE created", compliance)
+	tflog.Info(ctx, "Compliance conversion completed")
 	return compliance
 }
+func OpenAPIToRoutes(ctx context.Context, openAPIRoutes []openapiclient.FunctionRoute) []Route {
 
-func OpenAPIToRoutes(openAPIRoutes []openapiclient.FunctionRoute) []Route {
-	var routes []Route
+	if len(openAPIRoutes) <= 0 {
+		return nil
+	}
 
-	for _, openAPIRoute := range openAPIRoutes {
+	routes := make([]Route, 0, len(openAPIRoutes))
+
+	for i, openAPIRoute := range openAPIRoutes {
 		// Convert string to types.String and int32 to types.Int64
 		path := types.StringValue(openAPIRoute.Path)
+
+		// Create methods slice with correct capacity
 		methods := make([]types.String, len(openAPIRoute.Methods))
 		for i, method := range openAPIRoute.Methods {
 			methods[i] = types.StringValue(method)
 		}
+
 		weight := types.Int64Value(int64(openAPIRoute.Weight))
 
 		// Create a Route instance
@@ -698,20 +713,29 @@ func OpenAPIToRoutes(openAPIRoutes []openapiclient.FunctionRoute) []Route {
 
 		// Append the result to the list
 		routes = append(routes, route)
+
+		tflog.SetField(ctx, "Converted OpenAPI route to internal Route",
+			map[string]interface{}{
+				"index":   i,
+				"path":    route.Path.ValueString(),
+				"methods": route.Methods,
+				"weight":  route.Weight.ValueInt64(),
+			})
 	}
 
 	return routes
 }
 
 // FunctionEnvsToSecrets converts a slice of FunctionEnv to a slice of Secret
-func FunctionEnvsToSecrets(functionEnvs []openapiclient.FunctionEnv) []Secret {
-	if len(functionEnvs) < 1 {
-		return []Secret{}
+func FunctionEnvsToSecrets(ctx context.Context, functionEnvs []openapiclient.FunctionEnv) []Secret {
+
+	if len(functionEnvs) == 0 {
+		return nil
 	}
-	// Initialize an empty slice of Secret with the same length as functionEnvs
-	secrets := make([]Secret, len(functionEnvs))
+
+	secrets := make([]Secret, 0, len(functionEnvs))
 	for _, functionEnv := range functionEnvs {
-		// Convert Name and Reference to types.String
+
 		name := types.StringValue(functionEnv.Name)
 		reference := types.StringValue(functionEnv.Reference)
 
@@ -720,7 +744,6 @@ func FunctionEnvsToSecrets(functionEnvs []openapiclient.FunctionEnv) []Secret {
 			Name:      name,
 			Reference: reference,
 		}
-
 		secrets = append(secrets, secret)
 	}
 	return secrets
