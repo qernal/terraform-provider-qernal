@@ -1,57 +1,59 @@
+
 # Data source for the qernal provider
 data "qernal_provider" "example" {
-  name = "AWS"
+  name = "GCP"
 }
 
 resource "qernal_function" "example" {
   name        = "my-function"
-  project_id  = "project-123"
+  project_id  = "a8d86e21-df21-407c-854b-f0aecec00042"
   description = "An example function"
-  type        = "HTTP"
+  type        = "http"
   version     = "1.0.0"
   image       = "docker.io/myrepo/myimage:latest"
   port        = 8080
-  compliance  = ["soc", "ipv6"]
+  compliance  = ["soc2"]
 
-  size {
+  size = {
     cpu    = 1
     memory = 512
   }
 
-  scaling {
-    type = "CPU"
+  scaling = {
+    type = "cpu"
     low  = 20
     high = 80
   }
 
-  deployments {
-    location {
+  deployment {
+    location = {
       continent   = data.qernal_provider.example.continents[0]
-      country     = data.qernal_provider.example.countries[0]
+      country     = data.qernal_provider.example.countries[1]
       city        = data.qernal_provider.example.cities[0]
       provider_id = data.qernal_provider.example.id
     }
-    replicas {
+    replicas = {
       min = 1
       max = 5
-      affinity {
+      affinity = {
         cloud   = true
         cluster = false
       }
     }
   }
 
-  routes {
+  route {
     path    = "/api"
     methods = ["GET", "POST"]
-    weight  = 100
+    weight  = 80
   }
 
-  secrets {
-    name      = "API_KEY"
-    reference = "secret_ref_123"
-  }
+  # secrets = [{
+  #   name      = "API_KEY"
+  #   reference = "projects:a8d86e21-df21-407c-854b-f0aecec0004/GHCR"
+  # }]
 }
+
 
 # Output the function ID
 output "function_id" {
