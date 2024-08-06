@@ -58,6 +58,7 @@ func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"route": schema.ListNestedBlock{
 				Description: "List of routes that define the function's endpoints.",
 				NestedObject: schema.NestedBlockObject{
+
 					Attributes: map[string]schema.Attribute{
 						"path": schema.StringAttribute{
 							Required:    true,
@@ -255,6 +256,9 @@ func (r *FunctionResource) Create(ctx context.Context, req resource.CreateReques
 	functionRoutes := RoutesToOpenAPI(plan.Route)
 	functionDeployment := DeploymentsToOepnAPI(plan.Deployment)
 	functionSecrets := SecretsToOpenAPI(plan.Secrets)
+	if functionSecrets == nil {
+		functionSecrets = []openapiclient.FunctionEnv{}
+	}
 	functionCompliance := ComplianceToOpenAPI(plan.Compliance)
 
 	// Create new Function
@@ -302,7 +306,9 @@ func (r *FunctionResource) Create(ctx context.Context, req resource.CreateReques
 		Memory: types.Int64Value(int64(function.Size.Memory)),
 	}
 	plan.Port = types.Int64Value(int64(function.Port))
-	plan.Route = OpenAPIToRoutes(ctx, function.Routes)
+
+	// skip updates to routes as ordering would produce mismatch
+	//plan.Route = OpenAPIToRoutes(ctx, function.Routes)
 	plan.Scaling = Scaling{
 		Type: types.StringValue(function.Scaling.Type),
 		Low:  types.Int64Value(int64(function.Scaling.Low)),
@@ -384,9 +390,33 @@ func (r *FunctionResource) Update(ctx context.Context, req resource.UpdateReques
 	functionSize := openapiclient.NewFunctionSize(int32(plan.Size.CPU.ValueInt64()), int32(plan.Size.Memory.ValueInt64()))
 	functionRoutes := RoutesToOpenAPI(plan.Route)
 
-	//TODO: Needs work
-functionDeployment := DeploymentsToOepnAPI(plan.Deployment)
+	var functionDeployments []openapiclient.FunctionDeployment
+
+	for i, _ := range plan.Deployment {
+		openAPIdeploy := openapiclient.FunctionDeployment{
+			Id: plan.ID.ValueStringPointer(),
+			Location: openapiclient.Location{
+				ProviderId: plan.Deployment[i].Location.ProviderID.ValueString(),
+				Continent:  plan.Deployment[i].Location.Continent.ValueStringPointer(),
+				Country:    plan.Deployment[i].Location.Country.ValueStringPointer(),
+				City:       plan.Deployment[i].Location.City.ValueStringPointer(),
+			},
+			Replicas: openapiclient.FunctionReplicas{
+				Min: int32(plan.Deployment[i].Replicas.Min.ValueInt64()),
+				Max: int32(plan.Deployment[i].Replicas.Max.ValueInt64()),
+				Affinity: openapiclient.FunctionReplicasAffinity{
+					Cloud:   plan.Deployment[i].Replicas.Affinity.Cloud.ValueBool(),
+					Cluster: plan.Deployment[i].Replicas.Affinity.Cluster.ValueBool(),
+				},
+			},
+		}
+
+		functionDeployments = append(functionDeployments, openAPIdeploy)
+	}
 	functionSecrets := SecretsToOpenAPI(plan.Secrets)
+	if functionSecrets == nil {
+		functionSecrets = []openapiclient.FunctionEnv{}
+	}
 	functionCompliance := ComplianceToOpenAPI(plan.Compliance)
 
 	_, httpRes, err := r.client.FunctionsAPI.FunctionsUpdate(ctx, plan.ID.ValueString()).Function(openapiclient.Function{
@@ -404,7 +434,7 @@ functionDeployment := DeploymentsToOepnAPI(plan.Deployment)
 			Low:  int32(plan.Scaling.Low.ValueInt64()),
 			High: int32(plan.Scaling.High.ValueInt64()),
 		},
-		Deployments: ,
+		Deployments: functionDeployments,
 		Secrets:     functionSecrets,
 		Compliance:  functionCompliance,
 	}).Execute()
@@ -440,7 +470,9 @@ functionDeployment := DeploymentsToOepnAPI(plan.Deployment)
 		Memory: types.Int64Value(int64(function.Size.Memory)),
 	}
 	plan.Port = types.Int64Value(int64(function.Port))
-	plan.Route = OpenAPIToRoutes(ctx, function.Routes)
+
+	// skip updates to routes as ordering would produce mismatch
+	//plan.Route = OpenAPIToRoutes(ctx, function.Routes)
 	plan.Scaling = Scaling{
 		Type: types.StringValue(function.Scaling.Type),
 	}
@@ -550,9 +582,10 @@ type Secret struct {
 
 func RoutesToOpenAPI(routes []Route) []openapiclient.FunctionRoute {
 	if len(routes) <= 0 {
-		return nil
+		return []openapiclient.FunctionRoute{}
 	}
-	var openAPIRoutes []openapiclient.FunctionRoute
+
+	openAPIRoutes := make([]openapiclient.FunctionRoute, 0, len(routes))
 
 	for _, route := range routes {
 		// Convert types.String to string and types.Int64 to int32
@@ -648,15 +681,13 @@ func OpenAPIDeploymentsToDeployments(openAPIDeployments []openapiclient.Function
 }
 
 func SecretsToOpenAPI(secrets []Secret) []openapiclient.FunctionEnv {
-	var openAPIFunctionEnv []openapiclient.FunctionEnv
-	if len(secrets) <= 0 {
-		return nil
-	}
+	openAPIFunctionEnv := make([]openapiclient.FunctionEnv, 0)
 	for _, env := range secrets {
 		funcEnv := openapiclient.NewFunctionEnv(env.Name.String(), env.Reference.ValueString())
 		openAPIFunctionEnv = append(openAPIFunctionEnv, *funcEnv)
 	}
 	return openAPIFunctionEnv
+
 }
 
 func ComplianceToOpenAPI(compliance []types.String) []openapiclient.FunctionCompliance {
@@ -687,7 +718,7 @@ func OpenAPIToCompliance(ctx context.Context, openAPICompliance []openapiclient.
 func OpenAPIToRoutes(ctx context.Context, openAPIRoutes []openapiclient.FunctionRoute) []Route {
 
 	if len(openAPIRoutes) <= 0 {
-		return nil
+		return []Route{}
 	}
 
 	routes := make([]Route, 0, len(openAPIRoutes))
@@ -729,11 +760,11 @@ func OpenAPIToRoutes(ctx context.Context, openAPIRoutes []openapiclient.Function
 // FunctionEnvsToSecrets converts a slice of FunctionEnv to a slice of Secret
 func FunctionEnvsToSecrets(ctx context.Context, functionEnvs []openapiclient.FunctionEnv) []Secret {
 
+	secrets := make([]Secret, 0, len(functionEnvs))
 	if len(functionEnvs) == 0 {
-		return nil
+		return secrets
 	}
 
-	secrets := make([]Secret, 0, len(functionEnvs))
 	for _, functionEnv := range functionEnvs {
 
 		name := types.StringValue(functionEnv.Name)
