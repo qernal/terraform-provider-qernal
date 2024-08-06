@@ -392,7 +392,7 @@ func (r *FunctionResource) Update(ctx context.Context, req resource.UpdateReques
 
 	var functionDeployments []openapiclient.FunctionDeployment
 
-	for i, _ := range plan.Deployment {
+	for i := range plan.Deployment {
 		openAPIdeploy := openapiclient.FunctionDeployment{
 			Id: plan.ID.ValueStringPointer(),
 			Location: openapiclient.Location{
