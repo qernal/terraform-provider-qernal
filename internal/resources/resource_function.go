@@ -142,6 +142,14 @@ func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Required:    false,
 				Computed:    true,
 				Description: "Unique identifier for the function, assigned automatically upon creation.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"revision": schema.StringAttribute{
+				Required:    false,
+				Computed:    true,
+				Description: "Function revision",
 			},
 			"project_id": schema.StringAttribute{
 				Required: true,
@@ -287,6 +295,7 @@ func (r *FunctionResource) Create(ctx context.Context, req resource.CreateReques
 
 	// Set resource fields
 	plan.ID = types.StringValue(function.Id)
+	plan.Revision = types.StringValue(function.Revision)
 	plan.ProjectID = types.StringValue(function.ProjectId)
 	plan.Version = types.StringValue(function.Version)
 	plan.Name = types.StringValue(function.Name)
@@ -342,6 +351,7 @@ func (r *FunctionResource) Read(ctx context.Context, req resource.ReadRequest, r
 
 	// Overwrite state with refreshed state
 	state.ID = types.StringValue(function.Id)
+	state.Revision = types.StringValue(function.Revision)
 	state.ProjectID = types.StringValue(function.ProjectId)
 	state.Version = types.StringValue(function.Version)
 	state.Name = types.StringValue(function.Name)
@@ -379,9 +389,17 @@ func (r *FunctionResource) Read(ctx context.Context, req resource.ReadRequest, r
 // Update updates the resource and sets the updated Terraform state on success.
 func (r *FunctionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 
+	// retrieve state, used for revision information
+	var state FunctionResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Retrieve values from plan
 	var plan FunctionResourceModel
-	diags := req.Plan.Get(ctx, &plan)
+	diags = req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -422,17 +440,18 @@ func (r *FunctionResource) Update(ctx context.Context, req resource.UpdateReques
 
 	_, httpRes, err := r.client.FunctionsAPI.FunctionsUpdate(ctx, plan.ID.ValueString()).Function(openapiclient.Function{
 		Id:          plan.ID.ValueString(),
+		Revision:    state.Revision.ValueString(),
 		ProjectId:   plan.ProjectID.ValueString(),
 		Version:     plan.Version.ValueString(),
 		Name:        plan.Name.ValueString(),
-		Description: plan.Name.ValueString(),
+		Description: plan.Description.ValueString(),
 		Image:       plan.Image.ValueString(),
 		Type:        openapiclient.FunctionType(plan.FunctionType.ValueString()),
 		Size:        *functionSize,
 		Port:        int32(plan.Port.ValueInt64()),
 		Routes:      functionRoutes,
 		Scaling: openapiclient.FunctionScaling{
-			Type: plan.Scaling.Type.String(),
+			Type: plan.Scaling.Type.ValueString(),
 			Low:  int32(plan.Scaling.Low.ValueInt64()),
 			High: int32(plan.Scaling.High.ValueInt64()),
 		},
@@ -461,6 +480,7 @@ func (r *FunctionResource) Update(ctx context.Context, req resource.UpdateReques
 	// Update resource state with updated items
 
 	plan.ID = types.StringValue(function.Id)
+	plan.Revision = types.StringValue(function.Revision)
 	plan.ProjectID = types.StringValue(function.ProjectId)
 	plan.Version = types.StringValue(function.Version)
 	plan.Name = types.StringValue(function.Name)
@@ -477,6 +497,8 @@ func (r *FunctionResource) Update(ctx context.Context, req resource.UpdateReques
 	//plan.Route = OpenAPIToRoutes(ctx, function.Routes)
 	plan.Scaling = Scaling{
 		Type: types.StringValue(function.Scaling.Type),
+		Low:  types.Int64Value(int64(function.Scaling.Low)),
+		High: types.Int64Value(int64(function.Scaling.High)),
 	}
 	plan.Deployment = OpenAPIDeploymentsToDeployments(function.Deployments)
 
@@ -518,6 +540,7 @@ func (r *FunctionResource) Delete(ctx context.Context, req resource.DeleteReques
 // FunctionResourceModel maps the resource schema data.
 type FunctionResourceModel struct {
 	ID           types.String   `tfsdk:"id"`
+	Revision     types.String   `tfsdk:"revision"`
 	ProjectID    types.String   `tfsdk:"project_id"`
 	Name         types.String   `tfsdk:"name"`
 	Version      types.String   `tfsdk:"version"`
