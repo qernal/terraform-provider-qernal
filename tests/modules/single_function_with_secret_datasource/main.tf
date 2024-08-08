@@ -53,7 +53,7 @@ resource "qernal_function" "function" {
   secrets = [
     {
       name      = "ENV_VAR"
-      reference = qernal_secret_environment.env_secret.reference
+      reference = data.qernal_secret_environment.env_secret.reference
     }
   ]
 }
