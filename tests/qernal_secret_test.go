@@ -3,7 +3,6 @@ package tests
 import (
 	"fmt"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -25,7 +24,7 @@ func TestEnvironmentSecret(t *testing.T) {
 		t.Fatal("Failed to create project")
 	}
 
-	secretName := strings.ToUpper(randomSecretName())
+	secretName := randomSecretName()
 	secretValue := uuid.NewString()
 
 	moduleName := "./modules/environment_secret"
@@ -78,7 +77,7 @@ func TestRegistrySecret(t *testing.T) {
 		t.Fatal("Failed to create project")
 	}
 
-	secretName := strings.ToUpper(randomSecretName())
+	secretName := randomSecretName()
 	registryUrl := "ghcr.io"
 	authToken := randomSecretName()
 
