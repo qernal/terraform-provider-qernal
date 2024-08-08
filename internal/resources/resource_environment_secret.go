@@ -145,9 +145,7 @@ func (r *environmentsecretResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	plan.Name = types.StringValue(secretRes.Name)
-
-	plan.Reference = types.StringValue(fmt.Sprintf("projects:%s/%s", plan.ProjectID, plan.Name))
-
+	plan.Reference = types.StringValue(fmt.Sprintf("projects:%s/%s@%d", plan.ProjectID, plan.Name, plan.Revision))
 	plan.Revision = types.Int64Value(int64(secretRes.Revision))
 
 	date := resourceDate{

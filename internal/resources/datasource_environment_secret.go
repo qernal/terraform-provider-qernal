@@ -114,7 +114,7 @@ func (d *environmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	data.Name = types.StringValue(secret.Name)
 	data.ProjectID = types.StringValue(data.ProjectID.ValueString())
-	data.Reference = types.StringValue(fmt.Sprintf("projects:%s/%s", data.ProjectID, data.Name))
+	data.Reference = types.StringValue(fmt.Sprintf("projects:%s/%s@%d", data.ProjectID, data.Name, data.Revision))
 	data.Revision = types.Int64Value(int64(secret.Revision))
 	date := resourceDate{
 		CreatedAt: secret.Date.CreatedAt,
