@@ -63,7 +63,10 @@ func (d *registryDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 				Computed:    true,
 				Description: "url of the registry",
 			},
-
+			"reference": schema.StringAttribute{
+				Computed:    true,
+				Description: "reference attribute of the secret",
+			},
 			"revision": schema.Int64Attribute{
 				Computed: true,
 				Required: false,
@@ -110,13 +113,10 @@ func (d *registryDataSource) Read(ctx context.Context, req datasource.ReadReques
 	}
 
 	data.Name = types.StringValue(secret.Name)
-
 	data.ProjectID = types.StringValue(data.ProjectID.ValueString())
-
 	data.Registry = types.StringValue(secret.Payload.SecretMetaResponseRegistryPayload.Registry)
-
+	data.Reference = types.StringValue(fmt.Sprintf("projects:%s/%s", data.ProjectID, data.Name))
 	data.Revision = types.Int64Value(int64(secret.Revision))
-
 	date := resourceDate{
 		CreatedAt: secret.Date.CreatedAt,
 		UpdatedAt: secret.Date.UpdatedAt,
@@ -136,6 +136,7 @@ type registrysecretDataSourceModel struct {
 	ProjectID types.String          `tfsdk:"project_id"`
 	Name      types.String          `tfsdk:"name"`
 	Registry  types.String          `tfsdk:"registry"`
+	Reference types.String          `tfsdk:"reference"`
 	Revision  types.Int64           `tfsdk:"revision"`
 	Date      basetypes.ObjectValue `tfsdk:"date"`
 }

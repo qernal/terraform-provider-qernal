@@ -63,7 +63,10 @@ func (d *certificateDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 				Computed:    true,
 				Description: "Public key of the certificate",
 			},
-
+			"reference": schema.StringAttribute{
+				Computed:    true,
+				Description: "reference attribute of the secret",
+			},
 			"revision": schema.Int64Attribute{
 				Computed: true,
 				Required: false,
@@ -110,11 +113,9 @@ func (d *certificateDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	data.Name = types.StringValue(secret.Name)
-
 	data.ProjectID = types.StringValue(data.ProjectID.ValueString())
-
+	data.Reference = types.StringValue(fmt.Sprintf("projects:%s/%s", data.ProjectID, data.Name))
 	data.Revision = types.Int64Value(int64(secret.Revision))
-
 	data.Certificate = types.StringValue(secret.Payload.SecretMetaResponseCertificatePayload.Certificate)
 	date := resourceDate{
 		CreatedAt: secret.Date.CreatedAt,
@@ -135,6 +136,7 @@ type certificatesecretDataSourceModel struct {
 	ProjectID   types.String          `tfsdk:"project_id"`
 	Name        types.String          `tfsdk:"name"`
 	Certificate types.String          `tfsdk:"certificate"`
+	Reference   types.String          `tfsdk:"reference"`
 	Revision    types.Int64           `tfsdk:"revision"`
 	Date        basetypes.ObjectValue `tfsdk:"date"`
 }
