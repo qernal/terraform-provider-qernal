@@ -2,15 +2,18 @@ package tests
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"fmt"
-	"math/rand"
+	math_rand "math/rand"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/google/uuid"
 	openapi_chaos_client "github.com/qernal/openapi-chaos-go-client"
+	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
@@ -135,7 +138,6 @@ func getDefaultHost(projid string) (string, error) {
 }
 
 func cleanupTerraformFiles(modulePath string) error {
-
 	// List of files/directories to remove
 	tfFiles := []string{
 		".terraform",
@@ -155,11 +157,74 @@ func cleanupTerraformFiles(modulePath string) error {
 	return nil
 }
 
+func fetchDek(projectID string) (string, int32, error) {
+	client := qernalClient()
+	resp, r, err := client.SecretsAPI.ProjectsSecretsGet(context.Background(), projectID, "dek").Execute()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `ProjectsAPI.ProjectsSecretsGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+
+		return "", 0, err
+	}
+
+	return resp.Payload.SecretMetaResponseDek.Public, resp.Revision, nil
+}
+
+func encryptLocalSecret(pk, secret string) (string, error) {
+	pubKey, err := base64.StdEncoding.DecodeString(pk)
+	if err != nil {
+		return "", err
+	}
+
+	var pubKeyBytes [32]byte
+	copy(pubKeyBytes[:], pubKey)
+
+	secretBytes := []byte(secret)
+
+	var out []byte
+	encrypted, err := box.SealAnonymous(out, secretBytes, &pubKeyBytes, rand.Reader)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(encrypted), nil
+}
+
+func createSecretEnv(projid string, secretname string) (string, string, error) {
+	dek, dekRevision, err := fetchDek(projid)
+	if err != nil {
+		return "", "", err
+	}
+
+	encryptedSecret, err := encryptLocalSecret(dek, secretname)
+	if err != nil {
+		return "", "", err
+	}
+
+	client := qernalClient()
+	secretEnvBody := *openapi_chaos_client.NewSecretBody(secretname, openapi_chaos_client.SECRETCREATETYPE_ENVIRONMENT, openapi_chaos_client.SecretCreatePayload{
+		SecretEnvironment: &openapi_chaos_client.SecretEnvironment{
+			EnvironmentValue: encryptedSecret,
+		},
+	}, fmt.Sprintf("keys/dek/%d", dekRevision))
+	resp, r, err := client.SecretsAPI.ProjectsSecretsCreate(context.Background(), projid).SecretBody(secretEnvBody).Execute()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `ProjectsAPI.ProjectsSecretsCreate``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+
+		return "", "", err
+	}
+
+	return resp.Name, fmt.Sprintf("projects:%s/%s@%d", projid, resp.Name, resp.Revision), nil
+}
+
 func randomSecretName() string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, 4)
 	for i := range b {
-		b[i] = charset[rand.Intn(len(charset))]
+		b[i] = charset[math_rand.Intn(len(charset))]
 	}
-	return fmt.Sprintf("terra%s", string(b))
+	return fmt.Sprintf("TERRA_%s", string(b))
 }
