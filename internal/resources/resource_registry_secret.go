@@ -159,7 +159,7 @@ func (r *registrySecretResource) Create(ctx context.Context, req resource.Create
 
 	plan.Name = types.StringValue(secret.Name)
 
-	plan.Reference = types.StringValue(fmt.Sprintf("projects:%s/%s", plan.ProjectID, plan.Name))
+	plan.Reference = types.StringValue(fmt.Sprintf("projects:%s/%s@%d", plan.ProjectID, plan.Name, plan.Revision))
 	plan.Revision = types.Int64Value(int64(secret.Revision))
 
 	date := resourceDate{
