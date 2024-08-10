@@ -17,7 +17,6 @@ description: |-
 
 ### Required
 
-- `compliance` (List of String) Compliance standards the function adheres to, one of soc or ipv6
 - `image` (String) Container image for the function.
 - `name` (String) Name of the function.
 - `port` (Number) Port on which the function will listen for incoming requests.
@@ -29,14 +28,15 @@ description: |-
 
 ### Optional
 
-- `deployments` (Block List) List of deployments for the function, specifying locations and replicas. (see [below for nested schema](#nestedblock--deployments))
+- `compliance` (List of String) Compliance standards the function adheres to, one of soc or ipv6
+- `deployment` (Block List) List of deployments for the function, specifying locations and replicas. (see [below for nested schema](#nestedblock--deployment))
 - `description` (String) A brief description of the function.
-- `routes` (Block List) List of routes that define the function's endpoints. (see [below for nested schema](#nestedblock--routes))
-- `secrets` (Attributes List) List of secrets used by the function. (see [below for nested schema](#nestedatt--secrets))
+- `route` (Block List) List of routes that define the function's endpoints. (see [below for nested schema](#nestedblock--route))
 
 ### Read-Only
 
 - `id` (String) Unique identifier for the function, assigned automatically upon creation.
+- `revision` (String) Function revision
 
 <a id="nestedatt--scaling"></a>
 ### Nested Schema for `scaling`
@@ -57,36 +57,43 @@ Required:
 - `memory` (Number) Amount of memory allocated to the function.
 
 
-<a id="nestedblock--deployments"></a>
-### Nested Schema for `deployments`
+<a id="nestedblock--deployment"></a>
+### Nested Schema for `deployment`
 
 Required:
 
-- `location` (Attributes) Deployment location details. (see [below for nested schema](#nestedatt--deployments--location))
-- `replicas` (Attributes) Replica configuration for the deployment. (see [below for nested schema](#nestedatt--deployments--replicas))
+- `location` (Attributes) Deployment location details. (see [below for nested schema](#nestedatt--deployment--location))
+- `replicas` (Attributes) Replica configuration for the deployment. (see [below for nested schema](#nestedatt--deployment--replicas))
 
-<a id="nestedatt--deployments--location"></a>
-### Nested Schema for `deployments.location`
+Optional:
+
+- `secrets` (Attributes) Secret to be used by the function (see [below for nested schema](#nestedatt--deployment--secrets))
+
+<a id="nestedatt--deployment--location"></a>
+### Nested Schema for `deployment.location`
 
 Required:
+
+- `provider_id` (String) ID of the cloud provider.
+
+Optional:
 
 - `city` (String) City where the deployment is located.
 - `continent` (String) Continent where the deployment is located.
 - `country` (String) Country where the deployment is located.
-- `provider_id` (String) ID of the cloud provider.
 
 
-<a id="nestedatt--deployments--replicas"></a>
-### Nested Schema for `deployments.replicas`
+<a id="nestedatt--deployment--replicas"></a>
+### Nested Schema for `deployment.replicas`
 
 Required:
 
-- `affinity` (Attributes) Affinity settings for replicas. (see [below for nested schema](#nestedatt--deployments--replicas--affinity))
+- `affinity` (Attributes) Affinity settings for replicas. (see [below for nested schema](#nestedatt--deployment--replicas--affinity))
 - `max` (Number) Maximum number of replicas.
 - `min` (Number) Minimum number of replicas.
 
-<a id="nestedatt--deployments--replicas--affinity"></a>
-### Nested Schema for `deployments.replicas.affinity`
+<a id="nestedatt--deployment--replicas--affinity"></a>
+### Nested Schema for `deployment.replicas.affinity`
 
 Required:
 
@@ -95,21 +102,21 @@ Required:
 
 
 
+<a id="nestedatt--deployment--secrets"></a>
+### Nested Schema for `deployment.secrets`
 
-<a id="nestedblock--routes"></a>
-### Nested Schema for `routes`
+Required:
+
+- `name` (String) Name of the secret
+- `reference` (String) Reference to the secrets value
+
+
+
+<a id="nestedblock--route"></a>
+### Nested Schema for `route`
 
 Required:
 
 - `methods` (List of String) HTTP methods supported by the route (e.g., GET, POST).
 - `path` (String) Path of the route.
 - `weight` (Number) Weight of the route for load balancing.
-
-
-<a id="nestedatt--secrets"></a>
-### Nested Schema for `secrets`
-
-Required:
-
-- `name` (String) Name of the secret.
-- `reference` (String) Reference to the secret's value.
