@@ -50,7 +50,7 @@ resource "qernal_function" "function" {
     weight  = 100
   }
 
-  secrets = {
+  secrets {
     name      = "ENV_VAR"
     reference = data.qernal_secret_environment.env_secret.reference
   }
