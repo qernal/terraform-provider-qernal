@@ -17,11 +17,11 @@ description: |-
 
 ### Required
 
-- `name` (String) name of the qernal provider provider
+- `name` (String) Name of provider
 
 ### Read-Only
 
-- `cities` (List of String)
-- `continents` (List of String) available provider locations
-- `countries` (List of String)
-- `id` (String) id of the provider
+- `cities` (List of String) Available cities
+- `continents` (List of String) Available continents
+- `countries` (List of String) Available countries
+- `id` (String) ID of provider
