@@ -45,10 +45,9 @@ resource "qernal_function" "function" {
     weight  = 100
   }
 
-  secrets = [
-    {
-      name      = "ENV_VAR"
-      reference = var.secret_reference
-    }
-  ]
+  secrets = {
+    name      = "ENV_VAR"
+    reference = var.secret_reference
+  }
+
 }
