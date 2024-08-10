@@ -136,7 +136,7 @@ func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					},
 				},
 			},
-			"secrets": schema.ListNestedBlock{
+			"secret": schema.ListNestedBlock{
 				Description: "secrets to be use dby the function",
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
@@ -258,7 +258,7 @@ func (r *FunctionResource) Create(ctx context.Context, req resource.CreateReques
 	functionSize := openapiclient.NewFunctionSize(int32(plan.Size.CPU.ValueInt64()), int32(plan.Size.Memory.ValueInt64()))
 	functionRoutes := RoutesToOpenAPI(plan.Route)
 	functionDeployment := DeploymentsToOepnAPI(plan.Deployment)
-	functionSecrets := SecretsToOpenAPI(plan.Secrets)
+	functionSecrets := SecretsToOpenAPI(plan.Secret)
 	if functionSecrets == nil {
 		functionSecrets = []openapiclient.FunctionEnv{}
 	}
@@ -315,9 +315,9 @@ func (r *FunctionResource) Create(ctx context.Context, req resource.CreateReques
 	plan.Compliance = OpenAPIToCompliance(ctx, function.Compliance)
 
 	if len(function.Secrets) == 0 {
-		plan.Secrets = nil
+		plan.Secret = nil
 	} else {
-		plan.Secrets = FunctionEnvsToSecrets(ctx, function.Secrets)
+		plan.Secret = FunctionEnvsToSecrets(ctx, function.Secrets)
 	}
 
 	// Set state to fully populated data
@@ -372,9 +372,9 @@ func (r *FunctionResource) Read(ctx context.Context, req resource.ReadRequest, r
 	state.Compliance = OpenAPIToCompliance(ctx, function.Compliance)
 
 	if len(function.Secrets) == 0 {
-		state.Secrets = nil
+		state.Secret = nil
 	} else {
-		state.Secrets = FunctionEnvsToSecrets(ctx, function.Secrets)
+		state.Secret = FunctionEnvsToSecrets(ctx, function.Secrets)
 	}
 
 	// Set refreshed state
@@ -430,7 +430,7 @@ func (r *FunctionResource) Update(ctx context.Context, req resource.UpdateReques
 
 		functionDeployments = append(functionDeployments, openAPIdeploy)
 	}
-	functionSecrets := SecretsToOpenAPI(plan.Secrets)
+	functionSecrets := SecretsToOpenAPI(plan.Secret)
 	// Always send an empty array to the API if there are no secrets
 	if functionSecrets == nil {
 		functionSecrets = []openapiclient.FunctionEnv{}
@@ -503,9 +503,9 @@ func (r *FunctionResource) Update(ctx context.Context, req resource.UpdateReques
 
 	plan.Compliance = OpenAPIToCompliance(ctx, function.Compliance)
 	if len(function.Secrets) == 0 {
-		plan.Secrets = nil
+		plan.Secret = nil
 	} else {
-		plan.Secrets = FunctionEnvsToSecrets(ctx, function.Secrets)
+		plan.Secret = FunctionEnvsToSecrets(ctx, function.Secrets)
 	}
 
 	diags = resp.State.Set(ctx, plan)
@@ -551,7 +551,7 @@ type FunctionResourceModel struct {
 	Route        []Route        `tfsdk:"route"`
 	Scaling      Scaling        `tfsdk:"scaling"`
 	Deployment   []Deployment   `tfsdk:"deployment"`
-	Secrets      []Secret       `tfsdk:"secrets"`
+	Secret       []Secret       `tfsdk:"secret"`
 	Compliance   []types.String `tfsdk:"compliance"`
 }
 
