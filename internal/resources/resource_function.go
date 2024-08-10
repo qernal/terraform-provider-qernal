@@ -133,6 +133,20 @@ func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 								},
 							},
 						},
+						"secrets": schema.SingleNestedAttribute{
+							Description: "Secret to be used by the function",
+							Optional:    true,
+							Attributes: map[string]schema.Attribute{
+								"name": schema.StringAttribute{
+									Required:    true,
+									Description: "Name of the secret",
+								},
+								"reference": schema.StringAttribute{
+									Required:    true,
+									Description: "Reference to the secrets value",
+								},
+							},
+						},
 					},
 				},
 			},
@@ -217,22 +231,6 @@ func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					"high": schema.Int64Attribute{
 						Required:    true,
 						Description: "Upper bound for scaling.",
-					},
-				},
-			},
-			"secrets": schema.ListNestedAttribute{
-				Optional:    true,
-				Description: "List of secrets used by the function.",
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{
-							Required:    true,
-							Description: "Name of the secret.",
-						},
-						"reference": schema.StringAttribute{
-							Required:    true,
-							Description: "Reference to the secret's value.",
-						},
 					},
 				},
 			},
