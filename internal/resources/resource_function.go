@@ -133,19 +133,20 @@ func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 								},
 							},
 						},
-						"secrets": schema.SingleNestedAttribute{
-							Description: "Secret to be used by the function",
-							Optional:    true,
-							Attributes: map[string]schema.Attribute{
-								"name": schema.StringAttribute{
-									Required:    true,
-									Description: "Name of the secret",
-								},
-								"reference": schema.StringAttribute{
-									Required:    true,
-									Description: "Reference to the secrets value",
-								},
-							},
+					},
+				},
+			},
+			"secrets": schema.ListNestedBlock{
+				Description: "secrets to be use dby the function",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Required:    true,
+							Description: "Name of the secret",
+						},
+						"reference": schema.StringAttribute{
+							Required:    true,
+							Description: "Reference to the secrets value",
 						},
 					},
 				},
