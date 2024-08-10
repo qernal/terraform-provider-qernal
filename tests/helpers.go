@@ -222,7 +222,7 @@ func createSecretEnv(projid string, secretname string) (string, string, error) {
 
 func randomSecretName() string {
 	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	b := make([]byte, 4)
+	b := make([]byte, 8)
 	for i := range b {
 		b[i] = charset[math_rand.Intn(len(charset))]
 	}
