@@ -434,11 +434,13 @@ func (r *FunctionResource) Update(ctx context.Context, req resource.UpdateReques
 		functionDeployments = append(functionDeployments, openAPIdeploy)
 	}
 	functionSecrets := SecretsToOpenAPI(plan.Secret)
-	// Always send an empty array to the API if there are no secrets
 	if functionSecrets == nil {
 		functionSecrets = []openapiclient.FunctionEnv{}
 	}
 	functionCompliance := ComplianceToOpenAPI(plan.Compliance)
+	if functionCompliance == nil {
+		functionCompliance = []openapiclient.FunctionCompliance{}
+	}
 
 	_, httpRes, err := r.client.FunctionsAPI.FunctionsUpdate(ctx, plan.ID.ValueString()).Function(openapiclient.Function{
 		Id:          plan.ID.ValueString(),
