@@ -535,6 +535,8 @@ github.com/posener/complete v1.2.3/go.mod h1:WZIdtGGp+qx0sLrYKtIRAruyNpv6hFCicSg
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/qernal/openapi-chaos-go-client v0.0.0-20240715205730-22d34df9d602 h1:1IxeY/5IT+chyZxV8WurDiI+KFfUSmMRoNXFXNhGtgQ=
 github.com/qernal/openapi-chaos-go-client v0.0.0-20240715205730-22d34df9d602/go.mod h1:V03TW7A8DLMBBZz1RGvIWog7Hfla2uPbNBIcMhg8bX8=
+github.com/qernal/openapi-chaos-go-client v0.0.0-20240814103145-ed7f64fee138 h1:xkbUI7dlITpu1ixCiw/wDoOKmgQeES2xPrDlHw08K7o=
+github.com/qernal/openapi-chaos-go-client v0.0.0-20240814103145-ed7f64fee138/go.mod h1:V03TW7A8DLMBBZz1RGvIWog7Hfla2uPbNBIcMhg8bX8=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rogpeppe/go-internal v1.9.0 h1:73kH8U+JUqXU8lRuOHeVHaa/SZPifC7BkcraZVejAe8=
