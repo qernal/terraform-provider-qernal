@@ -263,6 +263,9 @@ func (r *FunctionResource) Create(ctx context.Context, req resource.CreateReques
 		functionSecrets = []openapiclient.FunctionEnv{}
 	}
 	functionCompliance := ComplianceToOpenAPI(plan.Compliance)
+	if functionCompliance == nil {
+		functionCompliance = []openapiclient.FunctionCompliance{}
+	}
 
 	// Create new Function
 	function, httpRes, err := r.client.FunctionsAPI.FunctionsCreate(ctx).FunctionBody(openapiclient.FunctionBody{
