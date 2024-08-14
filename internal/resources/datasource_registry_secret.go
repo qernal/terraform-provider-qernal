@@ -115,7 +115,7 @@ func (d *registryDataSource) Read(ctx context.Context, req datasource.ReadReques
 	data.Name = types.StringValue(secret.Name)
 	data.ProjectID = types.StringValue(data.ProjectID.ValueString())
 	data.Registry = types.StringValue(secret.Payload.SecretMetaResponseRegistryPayload.Registry)
-	data.Reference = types.StringValue(fmt.Sprintf("projects:%s/%s@%d", data.ProjectID, data.Name, data.Revision))
+	data.Reference = types.StringValue(fmt.Sprintf("projects:%s/%s@%d", data.ProjectID.ValueString(), data.Name.ValueString(), data.Revision.ValueInt64()))
 	data.Revision = types.Int64Value(int64(secret.Revision))
 	date := resourceDate{
 		CreatedAt: secret.Date.CreatedAt,
