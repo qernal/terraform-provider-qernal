@@ -32,7 +32,7 @@ description: |-
 - `deployment` (Block List) List of deployments for the function, specifying locations and replicas. (see [below for nested schema](#nestedblock--deployment))
 - `description` (String) A brief description of the function.
 - `route` (Block List) List of routes that define the function's endpoints. (see [below for nested schema](#nestedblock--route))
-- `secrets` (Block List) secrets to be use dby the function (see [below for nested schema](#nestedblock--secrets))
+- `secret` (Block List) secrets to be use dby the function (see [below for nested schema](#nestedblock--secret))
 
 ### Read-Only
 
@@ -110,8 +110,8 @@ Required:
 - `weight` (Number) Weight of the route for load balancing.
 
 
-<a id="nestedblock--secrets"></a>
-### Nested Schema for `secrets`
+<a id="nestedblock--secret"></a>
+### Nested Schema for `secret`
 
 Required:
 
