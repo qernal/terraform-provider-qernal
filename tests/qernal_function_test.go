@@ -14,7 +14,7 @@ import (
 )
 
 func validateResponseBody(status int, body string) bool {
-	if status == 200 && strings.Contains(body, "Hello Word") {
+	if status == 200 && strings.Contains(body, "This is a test server used for Testcontainers") {
 		return true
 	}
 
