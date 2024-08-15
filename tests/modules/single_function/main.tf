@@ -8,7 +8,7 @@ resource "qernal_function" "function" {
   name        = var.function_name
   description = "Hello world"
   image       = "testcontainers/helloworld:1.1.0"
-  port        = 80
+  port        = 8080
   type        = "http"
 
   scaling = {
