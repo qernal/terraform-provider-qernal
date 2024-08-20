@@ -80,27 +80,21 @@ type ResponseData struct {
 }
 
 func EncryptLocalSecret(pk, secret string) (string, error) {
-	secretBytes := []byte(secret)
 	pubKey, err := base64.StdEncoding.DecodeString(pk)
 	if err != nil {
 		return "", err
 	}
 
-	// Create a slice with enough capacity for both secret and public key
-	privateKey := make([]byte, 0, len(secretBytes)+len(pubKey))
-	privateKey = append(privateKey, secretBytes...)
-	privateKey = append(privateKey, pubKey...)
-	plaintextBytes := []byte(secret)
+	var pubKeyBytes [32]byte
+	copy(pubKeyBytes[:], pubKey)
 
-	var privateKeyArray [32]byte
-	copy(privateKeyArray[:], privateKey)
+	secretBytes := []byte(secret)
 
-	var nonce [24]byte
-	if _, err := io.ReadFull(rand.Reader, nonce[:]); err != nil {
+	var out []byte
+	encrypted, err := box.SealAnonymous(out, secretBytes, &pubKeyBytes, rand.Reader)
+	if err != nil {
 		return "", err
 	}
-
-	encrypted := box.Seal(nonce[:], plaintextBytes, &nonce, &privateKeyArray, new([32]byte))
 
 	return base64.StdEncoding.EncodeToString(encrypted), nil
 }
