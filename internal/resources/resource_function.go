@@ -5,10 +5,14 @@ import (
 	"fmt"
 	qernalclient "terraform-provider-qernal/internal/client"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	openapiclient "github.com/qernal/openapi-chaos-go-client"
@@ -55,6 +59,7 @@ func (r *FunctionResource) Metadata(_ context.Context, req resource.MetadataRequ
 func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Blocks: map[string]schema.Block{
+
 			"route": schema.ListNestedBlock{
 				Description: "List of routes that define the function's endpoints.",
 				NestedObject: schema.NestedBlockObject{
@@ -83,25 +88,43 @@ func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						"location": schema.SingleNestedAttribute{
 							Required:    true,
 							Description: "Deployment location details.",
+							Validators: []validator.Object{
+								objectvalidator.AtLeastOneOf(
+									path.MatchRelative().AtListIndex(0),
+								),
+							},
 							Attributes: map[string]schema.Attribute{
+
 								"provider_id": schema.StringAttribute{
 									Required:    true,
 									Description: "ID of the cloud provider.",
 								},
 								"continent": schema.StringAttribute{
-									Required:    false, // TODO: atLeastOneOf (continent, country or city)
-									Optional:    true,  // TODO:
+									Required:    false,
+									Optional:    true,
 									Description: "Continent where the deployment is located.",
 								},
 								"country": schema.StringAttribute{
-									Required:    false, // TODO: atLeastOneOf (continent, country or city)
-									Optional:    true,  // TODO:
+									Required:    false,
+									Optional:    true,
 									Description: "Country where the deployment is located.",
+									// Validators: []validator.String{
+									// 	stringvalidator.AtLeastOneOf(
+									// 		path.MatchRelative(),
+									// 		// path.MatchRoot("location").AtName("continent"),
+									// 	),
+									// },
 								},
 								"city": schema.StringAttribute{
-									Required:    false, // TODO: atLeastOneOf (continent, country or city)
-									Optional:    true,  // TODO:
+									Required:    false,
+									Optional:    true,
 									Description: "City where the deployment is located.",
+									Validators: []validator.String{
+										stringvalidator.AtLeastOneOf(
+											path.MatchRoot("location").AtName("country"),
+											path.MatchRoot("location").AtName("continent"),
+										),
+									},
 								},
 							},
 						},
@@ -188,7 +211,7 @@ func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Description: "Version of the function.",
 			},
 			"description": schema.StringAttribute{
-				Optional:    true,
+				Required:    true,
 				Description: "A brief description of the function.",
 			},
 			"image": schema.StringAttribute{
