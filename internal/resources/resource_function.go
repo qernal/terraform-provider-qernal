@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	qernalclient "terraform-provider-qernal/internal/client"
+	"terraform-provider-qernal/internal/validators"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -89,14 +87,12 @@ func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 							Required:    true,
 							Description: "Deployment location details.",
 							Validators: []validator.Object{
-								objectvalidator.AtLeastOneOf(
-									path.MatchRelative().AtListIndex(0),
-								),
+								validators.LocationValidator(),
 							},
 							Attributes: map[string]schema.Attribute{
-
 								"provider_id": schema.StringAttribute{
-									Required:    true,
+									Required:    false,
+									Optional:    true,
 									Description: "ID of the cloud provider.",
 								},
 								"continent": schema.StringAttribute{
@@ -108,23 +104,11 @@ func (r *FunctionResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 									Required:    false,
 									Optional:    true,
 									Description: "Country where the deployment is located.",
-									// Validators: []validator.String{
-									// 	stringvalidator.AtLeastOneOf(
-									// 		path.MatchRelative(),
-									// 		// path.MatchRoot("location").AtName("continent"),
-									// 	),
-									// },
 								},
 								"city": schema.StringAttribute{
 									Required:    false,
 									Optional:    true,
 									Description: "City where the deployment is located.",
-									Validators: []validator.String{
-										stringvalidator.AtLeastOneOf(
-											path.MatchRoot("location").AtName("country"),
-											path.MatchRoot("location").AtName("continent"),
-										),
-									},
 								},
 							},
 						},
