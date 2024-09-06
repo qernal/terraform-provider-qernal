@@ -17,6 +17,7 @@ description: |-
 
 ### Required
 
+- `description` (String) A brief description of the function.
 - `image` (String) Container image for the function.
 - `name` (String) Name of the function.
 - `port` (Number) Port on which the function will listen for incoming requests.
@@ -30,7 +31,6 @@ description: |-
 
 - `compliance` (List of String) Compliance standards the function adheres to, one of soc or ipv6
 - `deployment` (Block List) List of deployments for the function, specifying locations and replicas. (see [below for nested schema](#nestedblock--deployment))
-- `description` (String) A brief description of the function.
 - `route` (Block List) List of routes that define the function's endpoints. (see [below for nested schema](#nestedblock--route))
 - `secret` (Block List) secrets to be use dby the function (see [below for nested schema](#nestedblock--secret))
 
@@ -69,15 +69,12 @@ Required:
 <a id="nestedatt--deployment--location"></a>
 ### Nested Schema for `deployment.location`
 
-Required:
-
-- `provider_id` (String) ID of the cloud provider.
-
 Optional:
 
 - `city` (String) City where the deployment is located.
 - `continent` (String) Continent where the deployment is located.
 - `country` (String) Country where the deployment is located.
+- `provider_id` (String) ID of the cloud provider.
 
 
 <a id="nestedatt--deployment--replicas"></a>
