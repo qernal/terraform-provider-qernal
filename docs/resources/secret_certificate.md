@@ -18,9 +18,14 @@ description: |-
 ### Required
 
 - `certificate` (String, Sensitive) plain text value of the certificate public key
-- `certificate_value` (String, Sensitive) plain text value of the certificate private key
 - `name` (String) Name of the certificate
 - `project_id` (String)
+
+### Optional
+
+- `certificate_value` (String, Sensitive) plain text value of the certificate private key
+- `encrypted_revision` (String)
+- `encrypted_value` (String) encrypted value of certificate private key
 
 ### Read-Only
 

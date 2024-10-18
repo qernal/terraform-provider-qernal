@@ -17,10 +17,15 @@ description: |-
 
 ### Required
 
-- `auth_token` (String) authentication token for the registry
 - `name` (String)
 - `project_id` (String)
 - `registry_url` (String) The URL of the container registry (e.g., ghcr.io)
+
+### Optional
+
+- `auth_token` (String) plain text auth token for the registry
+- `encrypted_auth_token` (String) encrypted auth token for the registry
+- `encrypted_revision` (String)
 
 ### Read-Only
 

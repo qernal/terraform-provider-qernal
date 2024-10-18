@@ -17,9 +17,14 @@ description: |-
 
 ### Required
 
-- `name` (String) Name of the envrionment variable. e.g( PORT)
+- `name` (String) Name of the environment variable. e.g( PORT)
 - `project_id` (String)
-- `value` (String) Value of the environment variable
+
+### Optional
+
+- `encrypted_revision` (String)
+- `encrypted_value` (String) plaintext of the environment variable
+- `value` (String) plaintext of the environment variable
 
 ### Read-Only
 
