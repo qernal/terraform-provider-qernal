@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"terraform-provider-qernal/internal/client"
 	qernalclient "terraform-provider-qernal/internal/client"
+	"terraform-provider-qernal/internal/validators"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -73,8 +75,18 @@ func (r *registrySecretResource) Schema(_ context.Context, _ resource.SchemaRequ
 			},
 
 			"auth_token": schema.StringAttribute{
-				Required:    true,
-				Description: " authentication token for the registry",
+				Optional:    true,
+				Description: "plain text auth token for the registry",
+				Validators: []validator.String{
+					validators.SecretValidator(validators.Registry),
+				},
+			},
+			"encrypted_auth_token": schema.StringAttribute{
+				Optional:    true,
+				Description: "encrypted auth token for the registry",
+			},
+			"encrypted_revision": schema.StringAttribute{
+				Optional: true,
 			},
 
 			"revision": schema.Int64Attribute{
@@ -125,29 +137,36 @@ func (r *registrySecretResource) Create(ctx context.Context, req resource.Create
 	secretType := openapiclient.SecretCreateType(openapiclient.SECRETCREATETYPE_REGISTRY)
 	payload := openapiclient.SecretCreatePayload{}
 
-	registry := plan.RegistryUrl.ValueString()
+	var encryptedSecret string
+	var encryptionRef string
+	if plan.EncryptedAuthToken.IsNull() {
+		// User didn't provide an encrypted value
+		secret := plan.AuthToken.ValueString()
+		encryptedSecret, err = client.EncryptLocalSecret(keyRes.Payload.SecretMetaResponseDek.Public, secret)
+		if err != nil {
+			resp.Diagnostics.AddError("unable to encrypt local secret", "encryption failed with: "+err.Error())
+			return
+		}
+		encryptionRef = fmt.Sprintf(`keys/dek/%d`, keyRes.Revision)
+	} else {
+		// User provided an encrypted value, use it directly
+		encryptedSecret = plan.EncryptedAuthToken.ValueString()
+		encryptionRef = fmt.Sprintf(`keys/dek/%s`, plan.EncryptedRevision.ValueString())
+	}
 
-	// encrypt secret
-	registryValue := plan.AuthToken.ValueString()
+	payload.SecretRegistry = openapiclient.NewSecretRegistry(plan.RegistryUrl.ValueString(), encryptedSecret)
 
-	encryptedToken, err := client.EncryptLocalSecret(keyRes.Payload.SecretMetaResponseDek.Public, registryValue)
+	secretBody := openapiclient.NewSecretBody(plan.Name.ValueString(), secretType, payload, encryptionRef)
+
+	secret, httpRes, err := r.client.SecretsAPI.ProjectsSecretsCreate(ctx, plan.ProjectID.ValueString()).SecretBody(*secretBody).Execute()
+
 	if err != nil {
-		resp.Diagnostics.AddError("unable to encrypt local secret", "encryption failed with:"+err.Error())
+		resData, _ := qernalclient.ParseResponseData(httpRes)
+		resp.Diagnostics.AddError(
+			"Error creating Secret",
+			"Could not create Secret, unexpected error: "+err.Error()+" with"+fmt.Sprintf(", detail: %v", resData))
+		return
 	}
-
-	payload.SecretRegistry = &openapiclient.SecretRegistry{
-		Registry:      registry,
-		RegistryValue: encryptedToken,
-	}
-
-	encryptionRef := fmt.Sprintf(`keys/dek/%d`, keyRes.Revision)
-
-	secret, httpRes, err := r.client.SecretsAPI.ProjectsSecretsCreate(ctx, plan.ProjectID.ValueString()).SecretBody(openapiclient.SecretBody{
-		Name:       plan.Name.ValueString(),
-		Type:       secretType,
-		Payload:    payload,
-		Encryption: encryptionRef,
-	}).Execute()
 
 	if err != nil {
 		resData, _ := qernalclient.ParseResponseData(httpRes)
@@ -330,15 +349,16 @@ func (r *registrySecretResource) Delete(ctx context.Context, req resource.Delete
 	}
 }
 
-// secretResourceModel maps the resource schema data.
 type registrySecretResourceModel struct {
-	ProjectID   types.String          `tfsdk:"project_id"`
-	Name        types.String          `tfsdk:"name"`
-	Reference   types.String          `tfsdk:"reference"`
-	RegistryUrl types.String          `tfsdk:"registry_url"`
-	AuthToken   types.String          `tfsdk:"auth_token"`
-	Revision    types.Int64           `tfsdk:"revision"`
-	Date        basetypes.ObjectValue `tfsdk:"date"`
+	ProjectID          types.String          `tfsdk:"project_id"`
+	Name               types.String          `tfsdk:"name"`
+	Reference          types.String          `tfsdk:"reference"`
+	RegistryUrl        types.String          `tfsdk:"registry_url"`
+	AuthToken          types.String          `tfsdk:"auth_token"`
+	EncryptedAuthToken types.String          `tfsdk:"encrypted_auth_token"`
+	EncryptedRevision  types.String          `tfsdk:"encrypted_revision"`
+	Revision           types.Int64           `tfsdk:"revision"`
+	Date               basetypes.ObjectValue `tfsdk:"date"`
 }
 
 type payloadObj struct {

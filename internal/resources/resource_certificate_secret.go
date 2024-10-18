@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"terraform-provider-qernal/internal/client"
 	qernalclient "terraform-provider-qernal/internal/client"
+	"terraform-provider-qernal/internal/validators"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -74,9 +76,20 @@ func (r *certificateSecretResource) Schema(_ context.Context, _ resource.SchemaR
 			},
 
 			"certificate_value": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "plain text value of the certificate private key",
 				Sensitive:   true,
+				Validators: []validator.String{
+					validators.SecretValidator(validators.Certificate),
+				},
+			},
+
+			"encrypted_value": schema.StringAttribute{
+				Optional:    true,
+				Description: "encrypted value of certificate private key",
+			},
+			"encrypted_revision": schema.StringAttribute{
+				Optional: true,
 			},
 
 			"reference": schema.StringAttribute{
@@ -127,17 +140,24 @@ func (r *certificateSecretResource) Create(ctx context.Context, req resource.Cre
 	secretType := openapiclient.SecretCreateType(openapiclient.SECRETCREATETYPE_CERTIFICATE)
 	payload := openapiclient.SecretCreatePayload{}
 
-	// encrypt secret
-	secret := plan.CertificateValue.ValueString()
-
-	encryptedSecret, err := client.EncryptLocalSecret(keyRes.Payload.SecretMetaResponseDek.Public, secret)
-	if err != nil {
-		resp.Diagnostics.AddError("unable to encrypt local secret", "encryption failed with:"+err.Error())
+	var encryptedSecret string
+	var encryptionRef string
+	if plan.EncryptedValue.IsNull() {
+		// User didn't provide an encrypted value
+		secret := plan.CertificateValue.ValueString()
+		encryptedSecret, err = client.EncryptLocalSecret(keyRes.Payload.SecretMetaResponseDek.Public, secret)
+		if err != nil {
+			resp.Diagnostics.AddError("unable to encrypt local secret", "encryption failed with: "+err.Error())
+			return
+		}
+		encryptionRef = fmt.Sprintf(`keys/dek/%d`, keyRes.Revision)
+	} else {
+		// User provided an encrypted value, use it directly
+		encryptedSecret = plan.EncryptedValue.ValueString()
+		encryptionRef = fmt.Sprintf(`keys/dek/%s`, plan.EncryptedRevision.ValueString())
 	}
 
 	payload.SecretCertificate = openapiclient.NewSecretCertificate(plan.Certificate.ValueString(), encryptedSecret)
-
-	encryptionRef := fmt.Sprintf(`keys/dek/%d`, keyRes.Revision)
 
 	secretBody := openapiclient.NewSecretBody(plan.Name.ValueString(), secretType, payload, encryptionRef)
 
@@ -318,13 +338,14 @@ func (r *certificateSecretResource) Delete(ctx context.Context, req resource.Del
 	}
 }
 
-// secretResourceModel maps the resource schema data.
 type certificatetsecretResourceModel struct {
-	ProjectID        types.String          `tfsdk:"project_id"`
-	Name             types.String          `tfsdk:"name"`
-	Certificate      types.String          `tfsdk:"certificate"`
-	CertificateValue types.String          `tfsdk:"certificate_value"`
-	Reference        types.String          `tfsdk:"reference"`
-	Revision         types.Int64           `tfsdk:"revision"`
-	Date             basetypes.ObjectValue `tfsdk:"date"`
+	ProjectID         types.String          `tfsdk:"project_id"`
+	Name              types.String          `tfsdk:"name"`
+	Certificate       types.String          `tfsdk:"certificate"`
+	CertificateValue  types.String          `tfsdk:"certificate_value"`
+	Reference         types.String          `tfsdk:"reference"`
+	Revision          types.Int64           `tfsdk:"revision"`
+	Date              basetypes.ObjectValue `tfsdk:"date"`
+	EncryptedValue    types.String          `tfsdk:"encrypted_value"`
+	EncryptedRevision types.String          `tfsdk:"encrypted_revision"`
 }
