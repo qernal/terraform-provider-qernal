@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"terraform-provider-qernal/internal/client"
 	qernalclient "terraform-provider-qernal/internal/client"
+	"terraform-provider-qernal/internal/validators"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -64,12 +66,22 @@ func (r *environmentsecretResource) Schema(_ context.Context, _ resource.SchemaR
 
 			"name": schema.StringAttribute{
 				Required:    true,
-				Description: "Name of the envrionment variable. e.g( PORT)",
+				Description: "Name of the environment variable. e.g( PORT)",
 			},
 
 			"value": schema.StringAttribute{
-				Required:    true,
-				Description: "Value of the environment variable",
+				Optional:    true,
+				Description: "plaintext of the environment variable",
+				Validators: []validator.String{
+					validators.SecretValidator(validators.Environment),
+				},
+			},
+			"encrypted_value": schema.StringAttribute{
+				Optional:    true,
+				Description: "plaintext of the environment variable",
+			},
+			"encrypted_revision": schema.StringAttribute{
+				Optional: true,
 			},
 
 			"reference": schema.StringAttribute{
@@ -120,17 +132,24 @@ func (r *environmentsecretResource) Create(ctx context.Context, req resource.Cre
 	secretType := openapiclient.SecretCreateType(openapiclient.SECRETCREATETYPE_ENVIRONMENT)
 	payload := openapiclient.SecretCreatePayload{}
 
-	// encrypt secret
-	secret := plan.Value.ValueString()
-
-	encryptedSecret, err := client.EncryptLocalSecret(keyRes.Payload.SecretMetaResponseDek.Public, secret)
-	if err != nil {
-		resp.Diagnostics.AddError("unable to encrypt local secret", "encryption failed with:"+err.Error())
+	var encryptedSecret string
+	var encryptionRef string
+	if plan.EncryptedValue.IsNull() {
+		// User didn't provide an encrypted value
+		secret := plan.Value.ValueString()
+		encryptedSecret, err = client.EncryptLocalSecret(keyRes.Payload.SecretMetaResponseDek.Public, secret)
+		if err != nil {
+			resp.Diagnostics.AddError("unable to encrypt local secret", "encryption failed with: "+err.Error())
+			return
+		}
+		encryptionRef = fmt.Sprintf(`keys/dek/%d`, keyRes.Revision)
+	} else {
+		// User provided an encrypted value, use it directly
+		encryptedSecret = plan.EncryptedValue.ValueString()
+		encryptionRef = fmt.Sprintf(`keys/dek/%s`, plan.EncryptedRevision.ValueString())
 	}
 
 	payload.SecretEnvironment = openapiclient.NewSecretEnvironment(encryptedSecret)
-
-	encryptionRef := fmt.Sprintf(`keys/dek/%d`, keyRes.Revision)
 
 	secretBody := openapiclient.NewSecretBody(plan.Name.ValueString(), secretType, payload, encryptionRef)
 
@@ -216,8 +235,6 @@ func (r *environmentsecretResource) Update(ctx context.Context, req resource.Upd
 	secretType := openapiclient.SecretCreateType(openapiclient.SECRETCREATETYPE_ENVIRONMENT)
 	payload := openapiclient.SecretCreatePayload{}
 
-	secret := plan.Value.ValueString()
-
 	// Fetch dek key
 	keyRes, err := r.client.FetchDek(ctx, plan.ProjectID.ValueString())
 	if err != nil {
@@ -227,11 +244,20 @@ func (r *environmentsecretResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	// encrypt secret
+	var encryptedSecret string
 
-	encryptedSecret, err := client.EncryptLocalSecret(keyRes.Payload.SecretMetaResponseDek.Public, secret)
-	if err != nil {
-		resp.Diagnostics.AddError("unable to encrypt local secret", "encryption failed with:"+err.Error())
+	if plan.EncryptedValue.IsNull() {
+		// User didn't provide an encrypted value, so we need to encrypt
+		secret := plan.Value.ValueString()
+		var err error
+		encryptedSecret, err = client.EncryptLocalSecret(keyRes.Payload.SecretMetaResponseDek.Public, secret)
+		if err != nil {
+			resp.Diagnostics.AddError("unable to encrypt local secret", "encryption failed with: "+err.Error())
+			return
+		}
+	} else {
+		// User provided an encrypted value, use it directly
+		encryptedSecret = plan.EncryptedValue.ValueString()
 	}
 
 	payload.SecretEnvironment = openapiclient.NewSecretEnvironment(encryptedSecret)
@@ -308,10 +334,12 @@ func (r *environmentsecretResource) Delete(ctx context.Context, req resource.Del
 
 // secretResourceModel maps the resource schema data.
 type environmentsecretResourceModel struct {
-	ProjectID types.String          `tfsdk:"project_id"`
-	Name      types.String          `tfsdk:"name"`
-	Value     types.String          `tfsdk:"value"`
-	Reference types.String          `tfsdk:"reference"`
-	Revision  types.Int64           `tfsdk:"revision"`
-	Date      basetypes.ObjectValue `tfsdk:"date"`
+	ProjectID         types.String          `tfsdk:"project_id"`
+	Name              types.String          `tfsdk:"name"`
+	Value             types.String          `tfsdk:"value"`
+	Reference         types.String          `tfsdk:"reference"`
+	Revision          types.Int64           `tfsdk:"revision"`
+	Date              basetypes.ObjectValue `tfsdk:"date"`
+	EncryptedValue    types.String          `tfsdk:"encrypted_value"`
+	EncryptedRevision types.String          `tfsdk:"encrypted_revision"`
 }
