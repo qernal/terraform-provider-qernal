@@ -1,4 +1,3 @@
-
 # Data source for the qernal provider
 data "qernal_provider" "example" {
   name = "GCP"
